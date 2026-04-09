@@ -21,6 +21,8 @@ axiosInstance.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('user');
 
       if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
         window.location.assign('/login');

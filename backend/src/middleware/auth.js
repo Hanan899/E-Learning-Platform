@@ -12,7 +12,7 @@ const authenticate = async (req, res, next) => {
 
     const token = authorization.split(' ')[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findByPk(decoded.sub);
+    const user = await User.findByPk(decoded.id || decoded.sub);
 
     if (!user || !user.isActive) {
       return error(res, 'User is not authorized to access this resource', 401);

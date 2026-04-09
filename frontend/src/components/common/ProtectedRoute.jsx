@@ -1,8 +1,9 @@
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { getDefaultRouteForRole } from '../../utils/auth';
 
-function ProtectedRoute({ children, roles }) {
-  const { isAuthenticated, isLoading, hasRole } = useAuth();
+function ProtectedRoute({ roles, children }) {
+  const { isAuthenticated, isLoading, user, hasRole } = useAuth();
   const location = useLocation();
 
   if (isLoading) {
@@ -17,11 +18,11 @@ function ProtectedRoute({ children, roles }) {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
-  if (roles?.length && !roles.some((role) => hasRole(role))) {
-    return <Navigate to="/unauthorized" replace />;
+  if (roles?.length && !hasRole(roles)) {
+    return <Navigate to={getDefaultRouteForRole(user?.role)} replace />;
   }
 
-  return children;
+  return children || <Outlet />;
 }
 
 export default ProtectedRoute;
