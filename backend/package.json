@@ -1,0 +1,44 @@
+{
+  "name": "elearning-backend",
+  "version": "1.0.0",
+  "description": "Backend API for the E-Learning Platform",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "jest --forceExit --detectOpenHandles",
+    "seed": "node src/utils/seeder.js",
+    "db:sync": "node src/utils/syncDb.js"
+  },
+  "keywords": [
+    "elearning",
+    "express",
+    "sequelize",
+    "postgres"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "express-validator": "^7.3.0",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.1",
+    "multer": "^2.0.2",
+    "pg": "^8.16.3",
+    "sequelize": "^6.37.8",
+    "sequelize-cli": "^6.6.3",
+    "uuid": "^13.0.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "jest": "^30.3.0",
+    "nodemon": "^3.1.14",
+    "pg-mem": "^3.0.14",
+    "supertest": "^7.2.2"
+  }
+}
