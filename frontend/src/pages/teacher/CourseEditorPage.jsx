@@ -6,9 +6,10 @@ import {
   HiChevronRight,
   HiMiniPlus,
   HiOutlineEye,
+  HiOutlineQuestionMarkCircle,
   HiOutlineSquares2X2,
 } from 'react-icons/hi2';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import axiosInstance from '../../api/axios';
 import LessonEditor from '../../components/courses/LessonEditor';
 import AppLayout from '../../components/layout/AppLayout';
@@ -154,6 +155,22 @@ function CourseEditorPage() {
       await axiosInstance.delete(`/materials/${materialId}`);
     },
     onSuccess: invalidateCourse,
+  });
+
+  const createQuizMutation = useMutation({
+    mutationFn: async () => {
+      const response = await axiosInstance.post(`/courses/${id}/quizzes`, {
+        title: `${course.title} Quiz ${(course.quizzes || []).length + 1}`,
+      });
+      return response.data.data.quiz;
+    },
+    onSuccess: (createdQuiz) => {
+      invalidateCourse();
+      window.location.assign(`/teacher/quizzes/${createdQuiz.id}/build`);
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Unable to create quiz');
+    },
   });
 
   const handleDropSection = (targetSectionId) => {
@@ -303,6 +320,41 @@ function CourseEditorPage() {
           </div>
 
           <div className="mt-5 space-y-3 border-t border-slate-100 pt-5">
+            <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-bold">Quizzes</h3>
+                  <p className="mt-1 text-sm text-slate-500">Build timed MCQ checks for this course.</p>
+                </div>
+                <HiOutlineQuestionMarkCircle className="text-2xl text-slate-400" />
+              </div>
+
+              <div className="mt-4 space-y-3">
+                {(course.quizzes || []).map((quiz) => (
+                  <div key={quiz.id} className="rounded-2xl border border-slate-200 bg-white p-3">
+                    <p className="font-medium text-slate-900">{quiz.title}</p>
+                    <div className="mt-3 flex gap-2">
+                      <Link to={`/teacher/quizzes/${quiz.id}/build`} className="btn-secondary px-3 py-2 text-xs">
+                        Build
+                      </Link>
+                      <Link to={`/teacher/quizzes/${quiz.id}/results`} className="btn-secondary px-3 py-2 text-xs">
+                        Results
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+
+                <button
+                  type="button"
+                  className="btn-primary w-full"
+                  onClick={() => createQuizMutation.mutate()}
+                >
+                  <HiMiniPlus className="mr-2 text-lg" />
+                  Create Quiz
+                </button>
+              </div>
+            </div>
+
             <input
               className="input"
               placeholder="New section title"
