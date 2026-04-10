@@ -19,6 +19,7 @@ import CourseViewPage from './pages/student/CourseViewPage';
 import StudentAssignmentsPage from './pages/student/StudentAssignmentsPage';
 import StudentDashboard from './pages/student/StudentDashboard';
 import AssignmentsPage from './pages/teacher/AssignmentsPage';
+import CourseProgressPage from './pages/teacher/CourseProgressPage';
 import CourseEditorPage from './pages/teacher/CourseEditorPage';
 import MyCoursesPage from './pages/teacher/MyCoursesPage';
 import TeacherDashboard from './pages/teacher/TeacherDashboard';
@@ -55,6 +56,7 @@ function App() {
         <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
         <Route path="/teacher/courses" element={<MyCoursesPage />} />
         <Route path="/teacher/courses/:id/edit" element={<CourseEditorPage />} />
+        <Route path="/teacher/courses/:id/progress" element={<CourseProgressPage />} />
         <Route path="/teacher/assignments" element={<AssignmentsPage />} />
         <Route path="/teacher/assignments/:id" element={<AssignmentDetailPage />} />
         <Route path="/teacher/quizzes" element={<TeacherQuizzesPage />} />
@@ -70,7 +72,7 @@ function App() {
         <Route path="/student/assignments" element={<StudentAssignmentsPage />} />
         <Route path="/student/quizzes" element={<StudentQuizzesPage />} />
         <Route path="/student/quizzes/:id" element={<QuizPage />} />
-        <Route path="/student/progress" element={<ComingSoonPage title="Progress" />} />
+        <Route path="/student/progress" element={<StudentDashboard />} />
       </Route>
 
       <Route path="/unauthorized" element={<UnauthorizedPage />} />
