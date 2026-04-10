@@ -3,6 +3,7 @@ import ProtectedRoute from './components/common/ProtectedRoute';
 import { useAuth } from './hooks/useAuth';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import UsersPage from './pages/admin/UsersPage';
+import AssignmentDetailPage from './pages/teacher/AssignmentDetailPage';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import NotFoundPage from './pages/NotFoundPage';
@@ -10,7 +11,9 @@ import UnauthorizedPage from './pages/UnauthorizedPage';
 import ComingSoonPage from './pages/shared/ComingSoonPage';
 import CourseCatalogPage from './pages/student/CourseCatalogPage';
 import CourseViewPage from './pages/student/CourseViewPage';
+import StudentAssignmentsPage from './pages/student/StudentAssignmentsPage';
 import StudentDashboard from './pages/student/StudentDashboard';
+import AssignmentsPage from './pages/teacher/AssignmentsPage';
 import CourseEditorPage from './pages/teacher/CourseEditorPage';
 import MyCoursesPage from './pages/teacher/MyCoursesPage';
 import TeacherDashboard from './pages/teacher/TeacherDashboard';
@@ -47,7 +50,8 @@ function App() {
         <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
         <Route path="/teacher/courses" element={<MyCoursesPage />} />
         <Route path="/teacher/courses/:id/edit" element={<CourseEditorPage />} />
-        <Route path="/teacher/assignments" element={<ComingSoonPage title="Assignments" />} />
+        <Route path="/teacher/assignments" element={<AssignmentsPage />} />
+        <Route path="/teacher/assignments/:id" element={<AssignmentDetailPage />} />
         <Route path="/teacher/grades" element={<ComingSoonPage title="Grades" />} />
       </Route>
 
@@ -55,7 +59,7 @@ function App() {
         <Route path="/student/dashboard" element={<StudentDashboard />} />
         <Route path="/student/courses" element={<CourseCatalogPage />} />
         <Route path="/student/courses/:id" element={<CourseViewPage />} />
-        <Route path="/student/assignments" element={<ComingSoonPage title="Assignments" />} />
+        <Route path="/student/assignments" element={<StudentAssignmentsPage />} />
         <Route path="/student/quizzes" element={<ComingSoonPage title="Quizzes" />} />
         <Route path="/student/progress" element={<ComingSoonPage title="Progress" />} />
       </Route>
