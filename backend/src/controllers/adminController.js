@@ -24,7 +24,8 @@ const getAllUsers = async (req, res, next) => {
     const page = Math.max(Number(req.query.page) || 1, 1);
     const limit = Math.min(Math.max(Number(req.query.limit) || 10, 1), 50);
     const offset = (page - 1) * limit;
-    const { role, search } = req.query;
+    const role = typeof req.query.role === 'string' ? req.query.role.trim() : '';
+    const search = typeof req.query.search === 'string' ? req.query.search.trim() : '';
 
     const whereClause = {
       ...(role ? { role } : {}),

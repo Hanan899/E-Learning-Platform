@@ -13,7 +13,10 @@ const roleBadgeMap = {
 
 const fetchUsers = async ({ queryKey }) => {
   const [, params] = queryKey;
-  const response = await axiosInstance.get('/admin/users', { params });
+  const normalizedParams = Object.fromEntries(
+    Object.entries(params).filter(([, value]) => value !== '' && value !== null && value !== undefined)
+  );
+  const response = await axiosInstance.get('/admin/users', { params: normalizedParams });
   return response.data;
 };
 
@@ -34,7 +37,7 @@ function UsersPage() {
     return () => window.clearTimeout(timer);
   }, [search]);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ['admin-users', { page, limit, role, search: debouncedSearch }],
     queryFn: fetchUsers,
   });
@@ -95,6 +98,16 @@ function UsersPage() {
 
         {isLoading ? (
           <div className="py-16 text-center text-sm text-slate-500">Loading users...</div>
+        ) : isError ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-rose-50 text-rose-500">
+              <HiOutlineUsers className="text-4xl" />
+            </div>
+            <h3 className="mt-6 text-xl font-bold">We could not load users</h3>
+            <p className="mt-2 max-w-md text-sm text-slate-500">
+              {error?.response?.data?.message || 'Please refresh the page and try again.'}
+            </p>
+          </div>
         ) : users.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <div className="flex h-20 w-20 items-center justify-center rounded-full bg-slate-100 text-slate-400">

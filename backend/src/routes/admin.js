@@ -12,10 +12,10 @@ router.get(
   '/users',
   [
     query('role')
-      .optional()
+      .optional({ values: 'falsy' })
       .isIn(['admin', 'teacher', 'student'])
       .withMessage('Role filter must be admin, teacher, or student'),
-    query('search').optional().isString(),
+    query('search').optional({ values: 'falsy' }).isString(),
     query('page').optional().isInt({ min: 1 }).withMessage('Page must be at least 1'),
     query('limit').optional().isInt({ min: 1, max: 50 }).withMessage('Limit must be 1-50'),
     validateRequest,

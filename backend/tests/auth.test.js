@@ -180,6 +180,19 @@ describe('Authentication API', () => {
       expect(res.body.pagination.total).toBeGreaterThanOrEqual(4);
     });
 
+    test('admin can list all users when role query is blank', async () => {
+      const token = createToken(admin);
+      const res = await request(app)
+        .get('/api/admin/users?page=1&limit=10&role=')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.pagination.total).toBeGreaterThanOrEqual(4);
+      expect(res.body.data.users.some((user) => user.role === 'admin')).toBe(true);
+      expect(res.body.data.users.some((user) => user.role === 'teacher')).toBe(true);
+      expect(res.body.data.users.some((user) => user.role === 'student')).toBe(true);
+    });
+
     test('admin can change user role', async () => {
       const token = createToken(admin);
       const res = await request(app)
