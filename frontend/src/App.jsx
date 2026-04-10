@@ -7,6 +7,11 @@ import AssignmentDetailPage from './pages/teacher/AssignmentDetailPage';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import NotFoundPage from './pages/NotFoundPage';
+import QuizPage from './pages/student/QuizPage';
+import StudentQuizzesPage from './pages/student/StudentQuizzesPage';
+import QuizBuilderPage from './pages/teacher/QuizBuilderPage';
+import QuizResultsPage from './pages/teacher/QuizResultsPage';
+import TeacherQuizzesPage from './pages/teacher/TeacherQuizzesPage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
 import ComingSoonPage from './pages/shared/ComingSoonPage';
 import CourseCatalogPage from './pages/student/CourseCatalogPage';
@@ -52,6 +57,9 @@ function App() {
         <Route path="/teacher/courses/:id/edit" element={<CourseEditorPage />} />
         <Route path="/teacher/assignments" element={<AssignmentsPage />} />
         <Route path="/teacher/assignments/:id" element={<AssignmentDetailPage />} />
+        <Route path="/teacher/quizzes" element={<TeacherQuizzesPage />} />
+        <Route path="/teacher/quizzes/:id/build" element={<QuizBuilderPage />} />
+        <Route path="/teacher/quizzes/:id/results" element={<QuizResultsPage />} />
         <Route path="/teacher/grades" element={<ComingSoonPage title="Grades" />} />
       </Route>
 
@@ -60,7 +68,8 @@ function App() {
         <Route path="/student/courses" element={<CourseCatalogPage />} />
         <Route path="/student/courses/:id" element={<CourseViewPage />} />
         <Route path="/student/assignments" element={<StudentAssignmentsPage />} />
-        <Route path="/student/quizzes" element={<ComingSoonPage title="Quizzes" />} />
+        <Route path="/student/quizzes" element={<StudentQuizzesPage />} />
+        <Route path="/student/quizzes/:id" element={<QuizPage />} />
         <Route path="/student/progress" element={<ComingSoonPage title="Progress" />} />
       </Route>
 

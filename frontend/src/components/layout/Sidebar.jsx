@@ -4,6 +4,7 @@ import {
   HiOutlineChartBar,
   HiOutlineClipboardDocumentList,
   HiOutlineHome,
+  HiOutlineQuestionMarkCircle,
   HiOutlineSparkles,
   HiOutlineUserGroup,
 } from 'react-icons/hi2';
@@ -21,6 +22,7 @@ const navConfig = {
     { name: 'Dashboard', to: '/teacher/dashboard', icon: HiOutlineHome },
     { name: 'My Courses', to: '/teacher/courses', icon: HiOutlineBookOpen },
     { name: 'Assignments', to: '/teacher/assignments', icon: HiOutlineClipboardDocumentList },
+    { name: 'Quizzes', to: '/teacher/quizzes', icon: HiOutlineQuestionMarkCircle },
     { name: 'Grades', to: '/teacher/grades', icon: HiOutlineChartBar },
   ],
   student: [

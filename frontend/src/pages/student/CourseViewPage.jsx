@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { HiCheckCircle, HiOutlineDocumentText, HiOutlineFilm, HiOutlinePhoto } from 'react-icons/hi2';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import axiosInstance from '../../api/axios';
 import AppLayout from '../../components/layout/AppLayout';
 
@@ -211,6 +211,34 @@ function CourseViewPage() {
                   </div>
                 );
               })}
+            </div>
+          </article>
+
+          <article className="card p-6">
+            <h3 className="text-2xl font-bold">Course Quizzes</h3>
+            <div className="mt-5 space-y-3">
+              {(course.quizzes || []).length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-slate-200 p-5 text-sm text-slate-500">
+                  No quizzes available yet.
+                </div>
+              ) : (
+                course.quizzes.map((quiz) => (
+                  <div
+                    key={quiz.id}
+                    className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-4 md:flex-row md:items-center md:justify-between"
+                  >
+                    <div>
+                      <p className="font-medium text-slate-900">{quiz.title}</p>
+                      <p className="mt-1 text-sm text-slate-500">
+                        {quiz.timeLimit ? `${quiz.timeLimit} minute time limit` : 'No time limit'}
+                      </p>
+                    </div>
+                    <Link to={`/student/quizzes/${quiz.id}`} className="btn-primary text-center">
+                      Open Quiz
+                    </Link>
+                  </div>
+                ))
+              )}
             </div>
           </article>
 
