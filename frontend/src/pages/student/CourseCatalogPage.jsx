@@ -14,7 +14,7 @@ const fetchCourses = async ({ queryKey }) => {
 
 function CourseCard({ course, onEnroll }) {
   return (
-    <article className="card overflow-hidden" data-testid="course-card">
+    <article className="card flex h-full flex-col overflow-hidden" data-testid="course-card">
       <div className="h-44 bg-gradient-to-br from-primary/20 via-slate-100 to-accent/20">
         {course.thumbnailUrl ? (
           <img src={`http://localhost:5001${course.thumbnailUrl}`} alt={course.title} className="h-full w-full object-cover" />
@@ -25,23 +25,26 @@ function CourseCard({ course, onEnroll }) {
         )}
       </div>
 
-      <div className="p-5">
-        <div className="flex items-start justify-between gap-3">
-          <div>
+      <div className="flex flex-1 flex-col p-5">
+        <div className="flex flex-1 flex-col">
+          <div className="flex items-start justify-between gap-3">
             <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
               {course.category || 'General'}
             </span>
-            <h3 className="mt-3 text-xl font-bold">{course.title}</h3>
+            {course.isEnrolled ? (
+              <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+                Enrolled
+              </span>
+            ) : null}
           </div>
-          {course.isEnrolled ? (
-            <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
-              Enrolled
-            </span>
-          ) : null}
-        </div>
 
-        <p className="mt-3 text-sm text-slate-500">Teacher: {course.teacher?.fullName || 'Unknown'}</p>
-        <p className="mt-1 text-sm text-slate-500">{course.lessonCount} lessons</p>
+          <h3 className="mt-3 text-xl font-bold">{course.title}</h3>
+
+          <div className="mt-3 space-y-1 text-sm text-slate-500">
+            <p>Teacher: {course.teacher?.fullName || 'Unknown'}</p>
+            <p>{course.lessonCount} lessons</p>
+          </div>
+        </div>
 
         <div className="mt-5 flex gap-3">
           {course.isEnrolled ? (
