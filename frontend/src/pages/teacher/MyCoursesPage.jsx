@@ -6,6 +6,9 @@ import { Link } from 'react-router-dom';
 import axiosInstance from '../../api/axios';
 import CreateCourseModal from '../../components/courses/CreateCourseModal';
 import AppLayout from '../../components/layout/AppLayout';
+import EmptyState from '../../components/ui/EmptyState';
+import ErrorAlert from '../../components/ui/ErrorAlert';
+import PageLoader from '../../components/ui/PageLoader';
 
 const fetchCourses = async () => {
   const response = await axiosInstance.get('/courses');
@@ -65,7 +68,7 @@ function CourseCard({ course }) {
 function MyCoursesPage() {
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { data: courses = [], isLoading } = useQuery({
+  const { data: courses = [], isLoading, isError, error } = useQuery({
     queryKey: ['teacher-courses'],
     queryFn: fetchCourses,
   });
@@ -108,19 +111,25 @@ function MyCoursesPage() {
       </div>
 
       {isLoading ? (
-        <div className="card mt-8 p-10 text-center text-slate-500">Loading your courses...</div>
+        <div className="mt-8">
+          <PageLoader label="Loading your courses..." />
+        </div>
+      ) : isError ? (
+        <div className="mt-8">
+          <ErrorAlert
+            title="We could not load your courses"
+            message={error?.response?.data?.message || 'Please refresh the page and try again.'}
+          />
+        </div>
       ) : courses.length === 0 ? (
-        <div className="card mt-8 flex flex-col items-center justify-center px-8 py-16 text-center">
-          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <HiOutlineBookOpen className="text-4xl" />
-          </div>
-          <h3 className="mt-6 text-2xl font-bold">Create your first course</h3>
-          <p className="mt-2 max-w-md text-sm text-slate-500">
-            Start with a course shell, then organize sections, lessons, and materials from the editor.
-          </p>
-          <button type="button" className="btn-primary mt-6" onClick={() => setIsModalOpen(true)}>
-            Create your first course
-          </button>
+        <div className="mt-8">
+          <EmptyState
+            icon={HiOutlineBookOpen}
+            title="Create your first course"
+            description="Start with a course shell, then organize sections, lessons, and materials from the editor."
+            actionLabel="Create your first course"
+            onAction={() => setIsModalOpen(true)}
+          />
         </div>
       ) : (
         <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">

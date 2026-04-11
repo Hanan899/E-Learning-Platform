@@ -20,6 +20,9 @@ import { Link } from 'react-router-dom';
 import axiosInstance from '../../api/axios';
 import AppLayout from '../../components/layout/AppLayout';
 import CircularProgress from '../../components/ui/CircularProgress';
+import EmptyState from '../../components/ui/EmptyState';
+import ErrorAlert from '../../components/ui/ErrorAlert';
+import PageLoader from '../../components/ui/PageLoader';
 import StatCard from '../../components/ui/StatCard';
 import { getDeadlineState } from '../../utils/assignments';
 import { formatDate, formatScore } from '../../utils/formatters';
@@ -82,7 +85,7 @@ function StudentDashboard() {
   if (isLoading) {
     return (
       <AppLayout title="Student Dashboard">
-        <div className="card p-10 text-center text-slate-500">Loading your dashboard...</div>
+        <PageLoader label="Loading your dashboard..." />
       </AppLayout>
     );
   }
@@ -90,7 +93,10 @@ function StudentDashboard() {
   if (isError || !data) {
     return (
       <AppLayout title="Student Dashboard">
-        <div className="card p-10 text-center text-slate-500">Unable to load your dashboard right now.</div>
+        <ErrorAlert
+          title="We could not load your dashboard"
+          message="Please refresh the page and try again."
+        />
       </AppLayout>
     );
   }
@@ -141,8 +147,12 @@ function StudentDashboard() {
             </div>
 
             {data.enrolledCourses.length === 0 ? (
-              <div className="mt-6 rounded-3xl border border-dashed border-slate-200 px-6 py-12 text-center text-slate-500">
-                You are not enrolled in any courses yet.
+              <div className="mt-6">
+                <EmptyState
+                  icon={HiOutlineBookOpen}
+                  title="You are not enrolled in any courses yet"
+                  description="Once you join a course, your progress and quick links will appear here."
+                />
               </div>
             ) : (
               <div className="mt-6 space-y-4">
@@ -203,8 +213,12 @@ function StudentDashboard() {
             </div>
 
             {upcomingDeadlines.length === 0 ? (
-              <div className="mt-6 rounded-3xl border border-dashed border-slate-200 px-6 py-12 text-center text-slate-500">
-                Nothing due soon. You are in a good spot.
+              <div className="mt-6">
+                <EmptyState
+                  icon={HiOutlineClipboardDocumentList}
+                  title="Nothing due soon"
+                  description="You are in a good spot. Upcoming assignments that still need action will show up here."
+                />
               </div>
             ) : (
               <div className="mt-6 space-y-4">

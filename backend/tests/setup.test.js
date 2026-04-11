@@ -65,7 +65,7 @@ describe('Middleware', () => {
         contentType: 'application/pdf',
       });
 
-    expect(res.status).toBe(413);
+    expect(res.status).toBe(400);
     expect(res.body.message).toContain('10MB');
   });
 

@@ -13,7 +13,7 @@ import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useNotifications } from '../../hooks/useNotifications';
 
-const navConfig = {
+export const navConfig = {
   admin: [
     { name: 'Dashboard', to: '/admin', icon: HiOutlineHome },
     { name: 'Notifications', to: '/notifications', icon: HiOutlineBell },
@@ -45,7 +45,10 @@ function Sidebar() {
   const navigation = navConfig[user?.role] || [];
 
   return (
-    <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col bg-slate-950 px-5 py-6 text-slate-100 lg:flex">
+    <aside
+      className="fixed inset-y-0 left-0 hidden w-64 flex-col bg-slate-950 px-5 py-6 text-slate-100 md:flex"
+      data-testid="desktop-sidebar"
+    >
       <div className="mb-8 flex items-center gap-3">
         <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/20 text-primary">
           <HiOutlineAcademicCap className="text-2xl" />

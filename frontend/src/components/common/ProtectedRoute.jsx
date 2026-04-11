@@ -1,5 +1,6 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import PageLoader from '../ui/PageLoader';
 import { getDefaultRouteForRole } from '../../utils/auth';
 
 function ProtectedRoute({ roles, children }) {
@@ -9,7 +10,9 @@ function ProtectedRoute({ roles, children }) {
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50">
-        <div className="card px-6 py-5 text-sm text-slate-600">Loading your workspace...</div>
+        <div className="w-full max-w-xl px-4">
+          <PageLoader label="Loading your workspace..." />
+        </div>
       </div>
     );
   }

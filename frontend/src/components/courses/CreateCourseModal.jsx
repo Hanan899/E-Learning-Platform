@@ -56,8 +56,8 @@ function CreateCourseModal({ isOpen, onClose, onSubmit }) {
   return (
     <Dialog open={isOpen} onClose={closeModal} className="relative z-50">
       <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm" />
-      <div className="fixed inset-0 flex items-center justify-center p-4">
-        <DialogPanel className="card w-full max-w-2xl p-6 shadow-gentle">
+      <div className="fixed inset-0 flex items-end justify-center p-0 sm:items-center sm:p-4">
+        <DialogPanel className="card h-full w-full max-w-2xl rounded-none p-6 shadow-gentle sm:h-auto sm:rounded-3xl">
           <DialogTitle className="text-2xl font-bold">Create New Course</DialogTitle>
           <p className="mt-2 text-sm text-slate-500">
             Set up the course shell, upload a cover image, and publish when ready.

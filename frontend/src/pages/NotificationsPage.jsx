@@ -4,11 +4,14 @@ import {
   HiOutlineAcademicCap,
   HiOutlineExclamationTriangle,
   HiOutlineMegaphone,
+  HiOutlineBell,
   HiOutlineTrash,
   HiOutlineStar,
 } from 'react-icons/hi2';
 import AppLayout from '../components/layout/AppLayout';
 import { useNotifications } from '../hooks/useNotifications';
+import EmptyState from '../components/ui/EmptyState';
+import PageLoader from '../components/ui/PageLoader';
 import { formatRelativeTime } from '../utils/formatters';
 
 const filterTabs = ['All', 'Unread', 'Grades', 'Assignments'];
@@ -98,9 +101,13 @@ function NotificationsPage() {
         </section>
 
         {isLoading ? (
-          <div className="card p-10 text-center text-slate-500">Loading notifications...</div>
+          <PageLoader label="Loading notifications..." />
         ) : filteredNotifications.length === 0 ? (
-          <div className="card p-10 text-center text-slate-500">You&apos;re all caught up!</div>
+          <EmptyState
+            icon={HiOutlineBell}
+            title="You're all caught up!"
+            description="Grades, deadlines, announcements, and course updates will appear here."
+          />
         ) : (
           <div className="space-y-4">
             {filteredNotifications.map((notification) => {

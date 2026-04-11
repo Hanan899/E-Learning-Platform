@@ -2,12 +2,13 @@ import { Link } from 'react-router-dom';
 
 function NotFoundPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
-      <div className="card max-w-lg p-8 text-center">
-        <p className="text-sm font-medium uppercase tracking-[0.3em] text-primary">404</p>
-        <h1 className="mt-4 text-4xl font-extrabold">Page not found</h1>
+    <div className="flex min-h-screen items-center justify-center px-4 py-10">
+      <div className="card max-w-2xl p-10 text-center">
+        <p className="text-7xl font-black tracking-tight text-primary sm:text-8xl">404</p>
+        <h1 className="mt-5 text-4xl font-extrabold">This lesson wandered off</h1>
         <p className="mt-4 text-slate-500">
-          The route you tried does not exist in this learning workspace yet.
+          The page you were looking for is not here anymore. Let&apos;s get you back to the dashboard
+          before attendance is taken.
         </p>
         <Link to="/" className="btn-primary mt-8">
           Go back home

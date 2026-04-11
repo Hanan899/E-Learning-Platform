@@ -32,7 +32,7 @@ const register = async (req, res, next) => {
     const existingUser = await findUserByEmail(email);
 
     if (existingUser) {
-      return error(res, 'Email already in use', 400);
+      return error(res, 'Email already exists', 400);
     }
 
     const user = await User.create({

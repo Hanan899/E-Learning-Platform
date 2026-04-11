@@ -8,6 +8,9 @@ import {
 import { Link } from 'react-router-dom';
 import axiosInstance from '../../api/axios';
 import AppLayout from '../../components/layout/AppLayout';
+import EmptyState from '../../components/ui/EmptyState';
+import ErrorAlert from '../../components/ui/ErrorAlert';
+import PageLoader from '../../components/ui/PageLoader';
 import { formatDate, getInitials } from '../../utils/formatters';
 
 const fetchStats = async () => {
@@ -43,7 +46,7 @@ const cardConfig = [
 ];
 
 function AdminDashboard() {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['admin-stats'],
     queryFn: fetchStats,
   });
@@ -57,6 +60,16 @@ function AdminDashboard() {
 
   return (
     <AppLayout title="Admin Dashboard">
+      {isLoading ? <PageLoader label="Loading admin dashboard..." /> : null}
+      {isError ? (
+        <div className="mb-6">
+          <ErrorAlert
+            title="We could not load admin stats"
+            message="Please refresh the page and try again."
+          />
+        </div>
+      ) : null}
+
       <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
         {cardConfig.map((card) => {
           const Icon = card.icon;
@@ -68,7 +81,7 @@ function AdminDashboard() {
               </div>
               <p className="text-sm text-slate-500">{card.label}</p>
               <p className="mt-2 font-heading text-3xl font-bold">
-                {isLoading ? '...' : totals[card.key]}
+                {isLoading ? '--' : totals[card.key]}
               </p>
             </article>
           );
@@ -89,38 +102,72 @@ function AdminDashboard() {
             </span>
           </div>
 
-          <div className="mt-6 overflow-x-auto">
-            <table className="min-w-full text-left text-sm">
-              <thead className="text-slate-400">
-                <tr>
-                  <th className="pb-3 font-medium">User</th>
-                  <th className="pb-3 font-medium">Role</th>
-                  <th className="pb-3 font-medium">Joined</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
+          {(data?.recentUsers || []).length === 0 ? (
+            <div className="mt-6">
+              <EmptyState
+                icon={HiOutlineUserGroup}
+                title="No recent signups"
+                description="New users created in the last seven days will appear here."
+              />
+            </div>
+          ) : (
+            <>
+              <div className="mt-6 hidden overflow-x-auto md:block">
+                <table className="min-w-full text-left text-sm">
+                  <thead className="text-slate-400">
+                    <tr>
+                      <th className="pb-3 font-medium">User</th>
+                      <th className="pb-3 font-medium">Role</th>
+                      <th className="pb-3 font-medium">Joined</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {(data?.recentUsers || []).map((user) => (
+                      <tr key={user.id}>
+                        <td className="py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 font-heading font-bold text-slate-700">
+                              {getInitials(user.firstName, user.lastName)}
+                            </div>
+                            <div>
+                              <p className="font-medium text-slate-900">
+                                {user.firstName} {user.lastName}
+                              </p>
+                              <p className="text-slate-500">{user.email}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-4 capitalize text-slate-600">{user.role}</td>
+                        <td className="py-4 text-slate-600">{formatDate(user.createdAt)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="mt-6 space-y-4 md:hidden">
                 {(data?.recentUsers || []).map((user) => (
-                  <tr key={user.id}>
-                    <td className="py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 font-heading font-bold text-slate-700">
-                          {getInitials(user.firstName, user.lastName)}
-                        </div>
-                        <div>
-                          <p className="font-medium text-slate-900">
-                            {user.firstName} {user.lastName}
-                          </p>
-                          <p className="text-slate-500">{user.email}</p>
-                        </div>
+                  <article key={user.id} className="rounded-3xl border border-slate-100 bg-slate-50/70 p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 font-heading font-bold text-slate-700">
+                        {getInitials(user.firstName, user.lastName)}
                       </div>
-                    </td>
-                    <td className="py-4 capitalize text-slate-600">{user.role}</td>
-                    <td className="py-4 text-slate-600">{formatDate(user.createdAt)}</td>
-                  </tr>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-slate-900">
+                          {user.firstName} {user.lastName}
+                        </p>
+                        <p className="break-all text-sm text-slate-500">{user.email}</p>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between text-sm text-slate-500">
+                      <span className="capitalize">{user.role}</span>
+                      <span>{formatDate(user.createdAt)}</span>
+                    </div>
+                  </article>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </div>
+            </>
+          )}
         </article>
 
         <article className="card p-6">

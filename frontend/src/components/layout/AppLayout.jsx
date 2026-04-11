@@ -1,24 +1,63 @@
+import { useEffect, useState } from 'react';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
-import { HiChevronDown } from 'react-icons/hi2';
+import { HiBars3, HiChevronDown } from 'react-icons/hi2';
 import NotificationBell from './NotificationBell';
 import { useAuth } from '../../hooks/useAuth';
 import { getInitials } from '../../utils/formatters';
+import MobileSidebar from './MobileSidebar';
 import Sidebar from './Sidebar';
 
 function AppLayout({ title, children }) {
   const { user, logout } = useAuth();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  );
+
+  useEffect(() => {
+    const handleResize = () => {
+      const nextIsMobile = window.innerWidth < 768;
+      setIsMobileViewport(nextIsMobile);
+      if (!nextIsMobile) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   return (
     <div className="min-h-screen bg-mesh-soft">
-      <Sidebar />
-      <div className="lg:ml-64">
+      {isMobileViewport ? (
+        <MobileSidebar isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
+      ) : (
+        <Sidebar />
+      )}
+
+      <div className="md:ml-64">
         <header className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/90 px-4 py-4 backdrop-blur lg:px-8">
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
-            <div>
-              <p className="text-sm font-medium uppercase tracking-[0.25em] text-primary">
-                EduFlow
-              </p>
-              <h1 className="mt-1 text-2xl font-bold">{title}</h1>
+            <div className="flex items-center gap-3">
+              {isMobileViewport ? (
+                <button
+                  type="button"
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm md:hidden"
+                  onClick={() => setIsMobileMenuOpen(true)}
+                  aria-label="Open menu"
+                  data-testid="mobile-menu-button"
+                >
+                  <HiBars3 className="text-2xl" />
+                </button>
+              ) : null}
+              <div>
+                <p className="text-sm font-medium uppercase tracking-[0.25em] text-primary">
+                  EduFlow
+                </p>
+                <h1 className="text-2xl font-bold">{title}</h1>
+              </div>
             </div>
 
             <div className="flex items-center gap-3">
