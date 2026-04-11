@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { AuthContext } from '../src/context/AuthContext';
 import QuizPage from '../src/pages/student/QuizPage';
 import QuizBuilderPage from '../src/pages/teacher/QuizBuilderPage';
@@ -65,6 +65,21 @@ const quizPayload = {
   },
 };
 
+const createNotificationResponse = () => ({
+  data: {
+    data: {
+      notifications: [],
+      unreadCount: 0,
+    },
+    pagination: {
+      total: 0,
+      page: 1,
+      limit: 20,
+      totalPages: 0,
+    },
+  },
+});
+
 const renderQuizPage = () =>
   render(
     <QueryClientProvider client={new QueryClient()}>
@@ -94,7 +109,26 @@ describe('QuizPage', () => {
     mockedAxios.get.mockReset();
     mockedAxios.post.mockReset();
     mockedAxios.put.mockReset();
-    mockedAxios.get.mockResolvedValue(quizPayload);
+    vi.useRealTimers();
+    mockedAxios.get.mockImplementation((url) => {
+      if (url === '/quizzes/quiz-1') {
+        return Promise.resolve(quizPayload);
+      }
+
+      if (url === '/notifications') {
+        return Promise.resolve(createNotificationResponse());
+      }
+
+      if (url === '/notifications/count') {
+        return Promise.resolve({ data: { data: { unreadCount: 0 } } });
+      }
+
+      return Promise.reject(new Error(`Unhandled GET ${url}`));
+    });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   test('QuizPage shows pre-quiz screen initially', async () => {
@@ -119,6 +153,32 @@ describe('QuizPage', () => {
   });
 
   test('timer counts down and turns red below 60 seconds', async () => {
+    mockedAxios.get.mockImplementation((url) => {
+      if (url === '/quizzes/quiz-1') {
+        return Promise.resolve({
+          data: {
+            data: {
+              quiz: {
+                ...quizPayload.data.data.quiz,
+                timeLimit: 0.5,
+              },
+              attemptResult: null,
+            },
+          },
+        });
+      }
+
+      if (url === '/notifications') {
+        return Promise.resolve(createNotificationResponse());
+      }
+
+      if (url === '/notifications/count') {
+        return Promise.resolve({ data: { data: { unreadCount: 0 } } });
+      }
+
+      return Promise.reject(new Error(`Unhandled GET ${url}`));
+    });
+
     renderQuizPage();
 
     await userEvent.click(await screen.findByRole('button', { name: /start quiz/i }));
@@ -175,46 +235,60 @@ describe('QuizBuilderPage', () => {
     mockedAxios.get.mockReset();
     mockedAxios.post.mockReset();
     mockedAxios.put.mockReset();
-    mockedAxios.get.mockResolvedValue({
-      data: {
-        data: {
-          quiz: {
-            id: 'quiz-1',
-            title: 'Teacher Preview Quiz',
-            courseId: 'course-1',
-            course: { id: 'course-1', title: 'Science' },
-            timeLimit: 10,
-            questions: [
-              {
-                id: 'question-1',
-                text: 'First question text',
-                options: [
-                  { id: 'a', text: 'A1' },
-                  { id: 'b', text: 'B1' },
-                  { id: 'c', text: 'C1' },
-                  { id: 'd', text: 'D1' },
+    mockedAxios.get.mockImplementation((url) => {
+      if (url === '/quizzes/quiz-1') {
+        return Promise.resolve({
+          data: {
+            data: {
+              quiz: {
+                id: 'quiz-1',
+                title: 'Teacher Preview Quiz',
+                courseId: 'course-1',
+                course: { id: 'course-1', title: 'Science' },
+                timeLimit: 10,
+                questions: [
+                  {
+                    id: 'question-1',
+                    text: 'First question text',
+                    options: [
+                      { id: 'a', text: 'A1' },
+                      { id: 'b', text: 'B1' },
+                      { id: 'c', text: 'C1' },
+                      { id: 'd', text: 'D1' },
+                    ],
+                    points: 5,
+                    order: 1,
+                    correctOption: 'a',
+                  },
+                  {
+                    id: 'question-2',
+                    text: 'Second question text',
+                    options: [
+                      { id: 'a', text: 'A2' },
+                      { id: 'b', text: 'B2' },
+                      { id: 'c', text: 'C2' },
+                      { id: 'd', text: 'D2' },
+                    ],
+                    points: 5,
+                    order: 2,
+                    correctOption: 'b',
+                  },
                 ],
-                points: 5,
-                order: 1,
-                correctOption: 'a',
               },
-              {
-                id: 'question-2',
-                text: 'Second question text',
-                options: [
-                  { id: 'a', text: 'A2' },
-                  { id: 'b', text: 'B2' },
-                  { id: 'c', text: 'C2' },
-                  { id: 'd', text: 'D2' },
-                ],
-                points: 5,
-                order: 2,
-                correctOption: 'b',
-              },
-            ],
+            },
           },
-        },
-      },
+        });
+      }
+
+      if (url === '/notifications') {
+        return Promise.resolve(createNotificationResponse());
+      }
+
+      if (url === '/notifications/count') {
+        return Promise.resolve({ data: { data: { unreadCount: 0 } } });
+      }
+
+      return Promise.reject(new Error(`Unhandled GET ${url}`));
     });
   });
 

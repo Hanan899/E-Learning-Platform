@@ -4,22 +4,26 @@ import {
   HiOutlineChartBar,
   HiOutlineClipboardDocumentList,
   HiOutlineHome,
+  HiOutlineBell,
   HiOutlineQuestionMarkCircle,
   HiOutlineSparkles,
   HiOutlineUserGroup,
 } from 'react-icons/hi2';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { useNotifications } from '../../hooks/useNotifications';
 
 const navConfig = {
   admin: [
     { name: 'Dashboard', to: '/admin', icon: HiOutlineHome },
+    { name: 'Notifications', to: '/notifications', icon: HiOutlineBell },
     { name: 'Users', to: '/admin/users', icon: HiOutlineUserGroup },
     { name: 'All Courses', to: '/admin/courses', icon: HiOutlineBookOpen },
     { name: 'Reports', to: '/admin/reports', icon: HiOutlineChartBar },
   ],
   teacher: [
     { name: 'Dashboard', to: '/teacher/dashboard', icon: HiOutlineHome },
+    { name: 'Notifications', to: '/notifications', icon: HiOutlineBell },
     { name: 'My Courses', to: '/teacher/courses', icon: HiOutlineBookOpen },
     { name: 'Assignments', to: '/teacher/assignments', icon: HiOutlineClipboardDocumentList },
     { name: 'Quizzes', to: '/teacher/quizzes', icon: HiOutlineQuestionMarkCircle },
@@ -27,6 +31,7 @@ const navConfig = {
   ],
   student: [
     { name: 'Dashboard', to: '/student/dashboard', icon: HiOutlineHome },
+    { name: 'Notifications', to: '/notifications', icon: HiOutlineBell },
     { name: 'My Courses', to: '/student/courses', icon: HiOutlineBookOpen },
     { name: 'Assignments', to: '/student/assignments', icon: HiOutlineClipboardDocumentList },
     { name: 'Quizzes', to: '/student/quizzes', icon: HiOutlineSparkles },
@@ -36,6 +41,7 @@ const navConfig = {
 
 function Sidebar() {
   const { user, logout } = useAuth();
+  const { unreadCount } = useNotifications({ limit: 1 });
   const navigation = navConfig[user?.role] || [];
 
   return (
@@ -67,7 +73,12 @@ function Sidebar() {
               }
             >
               <Icon className="text-lg" />
-              {item.name}
+              <span className="flex-1">{item.name}</span>
+              {item.name === 'Notifications' && unreadCount > 0 ? (
+                <span className="rounded-full bg-danger px-2 py-0.5 text-xs font-semibold text-white">
+                  {unreadCount}
+                </span>
+              ) : null}
             </NavLink>
           );
         })}

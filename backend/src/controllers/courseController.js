@@ -8,7 +8,6 @@ const {
   Lesson,
   LessonProgress,
   Material,
-  Notification,
   Quiz,
   Section,
   User,
@@ -19,6 +18,7 @@ const {
   getUploadUrl,
   serializeMaterial,
 } = require('../utils/courseHelpers');
+const { createNotification } = require('../utils/notificationService');
 
 const getSearchFilter = (search) => {
   if (!search) {
@@ -371,10 +371,9 @@ const enrollStudent = async (req, res, next) => {
       enrolledAt: new Date(),
     });
 
-    await Notification.create({
-      userId: req.user.id,
+    await createNotification(req.user.id, {
       title: 'Course enrollment confirmed',
-      message: `You enrolled in ${course.title}`,
+      message: `Welcome to ${course.title}!`,
       type: 'enrollment',
     });
 

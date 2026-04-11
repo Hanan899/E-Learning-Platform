@@ -21,6 +21,21 @@ vi.mock('../src/api/axios', () => ({
   default: mockedAxios,
 }));
 
+const createNotificationResponse = () => ({
+  data: {
+    data: {
+      notifications: [],
+      unreadCount: 0,
+    },
+    pagination: {
+      total: 0,
+      page: 1,
+      limit: 20,
+      totalPages: 0,
+    },
+  },
+});
+
 const renderWithProviders = (ui) =>
   render(
     <QueryClientProvider client={new QueryClient()}>
@@ -50,28 +65,42 @@ describe('Admin users page', () => {
   });
 
   test('All roles filter does not send an empty role param', async () => {
-    mockedAxios.get.mockResolvedValueOnce({
-      data: {
-        data: {
-          users: [
-            {
-              id: 'user-1',
-              firstName: 'System',
-              lastName: 'Admin',
-              email: 'admin@school.com',
-              role: 'admin',
-              isActive: true,
-              createdAt: '2026-04-10T00:00:00.000Z',
+    mockedAxios.get.mockImplementation((url) => {
+      if (url === '/admin/users') {
+        return Promise.resolve({
+          data: {
+            data: {
+              users: [
+                {
+                  id: 'user-1',
+                  firstName: 'System',
+                  lastName: 'Admin',
+                  email: 'admin@school.com',
+                  role: 'admin',
+                  isActive: true,
+                  createdAt: '2026-04-10T00:00:00.000Z',
+                },
+              ],
             },
-          ],
-        },
-        pagination: {
-          total: 1,
-          page: 1,
-          limit: 10,
-          totalPages: 1,
-        },
-      },
+            pagination: {
+              total: 1,
+              page: 1,
+              limit: 10,
+              totalPages: 1,
+            },
+          },
+        });
+      }
+
+      if (url === '/notifications') {
+        return Promise.resolve(createNotificationResponse());
+      }
+
+      if (url === '/notifications/count') {
+        return Promise.resolve({ data: { data: { unreadCount: 0 } } });
+      }
+
+      return Promise.reject(new Error(`Unhandled GET ${url}`));
     });
 
     renderWithProviders(<UsersPage />);

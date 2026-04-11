@@ -1,6 +1,5 @@
 const {
   Course,
-  Notification,
   Question,
   Quiz,
   QuizAttempt,
@@ -17,6 +16,7 @@ const {
   serializeAttempt,
   serializeQuiz,
 } = require('../utils/quizHelpers');
+const { createNotification } = require('../utils/notificationService');
 
 const normalizeOptions = (options = []) =>
   options.map((option) => ({
@@ -249,12 +249,10 @@ const submitQuizAttempt = async (req, res, next) => {
       completedAt: new Date().toISOString(),
     });
 
-    await Notification.create({
-      userId: req.user.id,
+    await createNotification(req.user.id, {
       title: 'Quiz completed',
-      message: `Quiz ${access.quiz.title} completed! Score: ${result.score}%`,
+      message: `Quiz completed: ${result.score}%`,
       type: 'announcement',
-      createdAt: new Date().toISOString(),
     });
 
     return success(
