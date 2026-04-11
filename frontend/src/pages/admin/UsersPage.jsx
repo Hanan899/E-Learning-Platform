@@ -3,6 +3,9 @@ import { useEffect, useState } from 'react';
 import { HiEllipsisHorizontal, HiOutlineMagnifyingGlass, HiOutlineUsers } from 'react-icons/hi2';
 import axiosInstance from '../../api/axios';
 import AppLayout from '../../components/layout/AppLayout';
+import EmptyState from '../../components/ui/EmptyState';
+import ErrorAlert from '../../components/ui/ErrorAlert';
+import PageLoader from '../../components/ui/PageLoader';
 import { getInitials, formatDate } from '../../utils/formatters';
 
 const roleBadgeMap = {
@@ -97,30 +100,27 @@ function UsersPage() {
         </div>
 
         {isLoading ? (
-          <div className="py-16 text-center text-sm text-slate-500">Loading users...</div>
+          <div className="py-8">
+            <PageLoader label="Loading users..." />
+          </div>
         ) : isError ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-rose-50 text-rose-500">
-              <HiOutlineUsers className="text-4xl" />
-            </div>
-            <h3 className="mt-6 text-xl font-bold">We could not load users</h3>
-            <p className="mt-2 max-w-md text-sm text-slate-500">
-              {error?.response?.data?.message || 'Please refresh the page and try again.'}
-            </p>
+          <div className="mt-6">
+            <ErrorAlert
+              title="We could not load users"
+              message={error?.response?.data?.message || 'Please refresh the page and try again.'}
+            />
           </div>
         ) : users.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-slate-100 text-slate-400">
-              <HiOutlineUsers className="text-4xl" />
-            </div>
-            <h3 className="mt-6 text-xl font-bold">No users match this filter</h3>
-            <p className="mt-2 max-w-md text-sm text-slate-500">
-              Try changing the search phrase or role filter to widen the results.
-            </p>
+          <div className="mt-6">
+            <EmptyState
+              icon={HiOutlineUsers}
+              title="No users match this filter"
+              description="Try changing the search phrase or role filter to widen the results."
+            />
           </div>
         ) : (
           <>
-            <div className="mt-6 overflow-x-auto">
+            <div className="mt-6 hidden overflow-x-auto md:block">
               <table className="min-w-full text-left text-sm">
                 <thead className="border-b border-slate-100 text-slate-400">
                   <tr>
@@ -198,7 +198,68 @@ function UsersPage() {
               </table>
             </div>
 
-            <div className="mt-6 flex items-center justify-between">
+            <div className="mt-6 space-y-4 md:hidden">
+              {users.map((user) => (
+                <article key={user.id} className="rounded-3xl border border-slate-100 bg-slate-50/70 p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 font-heading font-bold text-slate-700">
+                      {getInitials(user.firstName, user.lastName)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-slate-900">
+                        {user.firstName} {user.lastName}
+                      </p>
+                      <p className="mt-1 break-all text-sm text-slate-500">{user.email}</p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <span
+                          className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold capitalize ${roleBadgeMap[user.role]}`}
+                        >
+                          {user.role}
+                        </span>
+                        <span className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-600">
+                          <span
+                            className={`h-2.5 w-2.5 rounded-full ${
+                              user.isActive ? 'bg-emerald-500' : 'bg-slate-400'
+                            }`}
+                          />
+                          {user.isActive ? 'Active' : 'Inactive'}
+                        </span>
+                      </div>
+                      <p className="mt-3 text-xs uppercase tracking-[0.2em] text-slate-400">
+                        Joined {formatDate(user.createdAt)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid gap-3">
+                    <select
+                      value={user.role}
+                      onChange={(event) => handleRoleChange(user.id, event.target.value)}
+                      className="input"
+                    >
+                      <option value="admin">Admin</option>
+                      <option value="teacher">Teacher</option>
+                      <option value="student">Student</option>
+                    </select>
+                    <button
+                      type="button"
+                      className="btn-secondary w-full"
+                      onClick={() => handleToggleStatus(user.id)}
+                    >
+                      {user.isActive ? 'Deactivate' : 'Activate'}
+                    </button>
+                    <button
+                      type="button"
+                      className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500"
+                    >
+                      <HiEllipsisHorizontal className="text-xl" />
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-slate-500">
                 Page {page} of {pagination.totalPages}
               </p>

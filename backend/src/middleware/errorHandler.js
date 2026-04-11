@@ -1,5 +1,9 @@
-const { ValidationError } = require('sequelize');
+const {
+  ValidationError,
+  UniqueConstraintError,
+} = require('sequelize');
 const multer = require('multer');
+const { TokenExpiredError } = require('jsonwebtoken');
 
 const errorHandler = (err, req, res, next) => {
   if (res.headersSent) {
@@ -8,9 +12,9 @@ const errorHandler = (err, req, res, next) => {
 
   if (err instanceof multer.MulterError) {
     if (err.code === 'LIMIT_FILE_SIZE') {
-      return res.status(413).json({
+      return res.status(400).json({
         success: false,
-        message: 'Uploaded file exceeds the 10MB size limit',
+        message: 'File too large (max 10MB)',
       });
     }
 
@@ -20,8 +24,32 @@ const errorHandler = (err, req, res, next) => {
     });
   }
 
+  if (err instanceof TokenExpiredError) {
+    return res.status(401).json({
+      success: false,
+      message: 'Session expired, please login again',
+    });
+  }
+
+  if (err instanceof UniqueConstraintError) {
+    const emailViolation = err.errors?.some((issue) => issue.path === 'email');
+
+    return res.status(400).json({
+      success: false,
+      message: emailViolation ? 'Email already exists' : 'A unique field already exists',
+      ...(err.errors?.length
+        ? {
+            errors: err.errors.map((issue) => ({
+              field: issue.path,
+              message: issue.message,
+            })),
+          }
+        : {}),
+    });
+  }
+
   if (err instanceof ValidationError) {
-    return res.status(422).json({
+    return res.status(400).json({
       success: false,
       message: 'Validation failed',
       errors: err.errors.map((issue) => ({

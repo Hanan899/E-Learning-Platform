@@ -6,6 +6,8 @@ import { HiOutlineAcademicCap, HiOutlineEye, HiOutlineEyeSlash } from 'react-ico
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { useAuth } from '../../hooks/useAuth';
+import ErrorAlert from '../../components/ui/ErrorAlert';
+import Spinner from '../../components/ui/Spinner';
 import { getDefaultRouteForRole } from '../../utils/auth';
 
 const loginSchema = z.object({
@@ -112,7 +114,7 @@ function LoginPage() {
           <button type="submit" className="btn-primary w-full" disabled={isSubmitting}>
             {isSubmitting ? (
               <span className="inline-flex items-center gap-2">
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                <Spinner size="sm" className="border-white/30 border-t-white" />
                 Signing in...
               </span>
             ) : (
@@ -122,8 +124,8 @@ function LoginPage() {
         </form>
 
         {errorMessage ? (
-          <div className="mt-5 rounded-2xl border border-danger/20 bg-danger/10 px-4 py-3 text-sm text-danger">
-            {errorMessage}
+          <div className="mt-5">
+            <ErrorAlert title="Sign-in failed" message={errorMessage} />
           </div>
         ) : null}
 

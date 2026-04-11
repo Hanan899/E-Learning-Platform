@@ -106,7 +106,7 @@ describe('Authentication API', () => {
       });
 
       expect(res.status).toBe(400);
-      expect(res.body.message).toContain('Email already in use');
+      expect(res.body.message).toContain('Email already exists');
     });
 
     test('rejects weak password with 400', async () => {

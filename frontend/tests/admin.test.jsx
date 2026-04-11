@@ -105,7 +105,7 @@ describe('Admin users page', () => {
 
     renderWithProviders(<UsersPage />);
 
-    expect(await screen.findByText('admin@school.com')).toBeInTheDocument();
+    expect((await screen.findAllByText('admin@school.com')).length).toBeGreaterThan(0);
 
     await waitFor(() => {
       expect(mockedAxios.get).toHaveBeenCalledWith('/admin/users', {

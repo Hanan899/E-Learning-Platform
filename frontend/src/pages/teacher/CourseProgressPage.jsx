@@ -4,6 +4,9 @@ import { HiOutlineArrowDownTray, HiOutlineChevronUpDown } from 'react-icons/hi2'
 import { useParams } from 'react-router-dom';
 import axiosInstance from '../../api/axios';
 import AppLayout from '../../components/layout/AppLayout';
+import EmptyState from '../../components/ui/EmptyState';
+import ErrorAlert from '../../components/ui/ErrorAlert';
+import PageLoader from '../../components/ui/PageLoader';
 
 const fetchCourseProgress = async (id) => {
   const response = await axiosInstance.get(`/courses/${id}/progress`);
@@ -93,7 +96,7 @@ function CourseProgressPage() {
   if (isLoading) {
     return (
       <AppLayout title="Course Progress">
-        <div className="card p-10 text-center text-slate-500">Loading course progress...</div>
+        <PageLoader label="Loading course progress..." />
       </AppLayout>
     );
   }
@@ -101,7 +104,10 @@ function CourseProgressPage() {
   if (isError || !data) {
     return (
       <AppLayout title="Course Progress">
-        <div className="card p-10 text-center text-slate-500">Unable to load course progress right now.</div>
+        <ErrorAlert
+          title="We could not load course progress"
+          message="Please refresh the page and try again."
+        />
       </AppLayout>
     );
   }
@@ -128,84 +134,131 @@ function CourseProgressPage() {
 
         <section className="card p-6">
           <h3 className="text-2xl font-bold">Student Progress Table</h3>
-          <div className="mt-6 overflow-x-auto">
-            <table className="min-w-full text-left text-sm">
-              <thead className="border-b border-slate-100 text-slate-400">
-                <tr>
-                  {[
-                    ['student', 'Student'],
-                    ['completionPercentage', 'Completion'],
-                    ['assignmentsSubmitted', 'Submitted'],
-                    ['assignmentsGraded', 'Graded'],
-                    ['assignmentAverageScore', 'Assignment Avg'],
-                    ['quizAverageScore', 'Quiz Avg'],
-                  ].map(([key, label]) => (
-                    <th key={key} className="pb-3 font-medium">
-                      <button
-                        type="button"
-                        className="inline-flex items-center gap-2 text-left"
-                        onClick={() => handleSort(key)}
-                      >
-                        {label}
-                        <HiOutlineChevronUpDown className="text-base" />
-                      </button>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
+          {rows.length === 0 ? (
+            <div className="mt-6">
+              <EmptyState
+                icon={HiOutlineChevronUpDown}
+                title="No enrolled students yet"
+                description="Student progress will appear here after enrollments begin."
+              />
+            </div>
+          ) : (
+            <>
+              <div className="mt-6 hidden overflow-x-auto md:block">
+                <table className="min-w-full text-left text-sm">
+                  <thead className="border-b border-slate-100 text-slate-400">
+                    <tr>
+                      {[
+                        ['student', 'Student'],
+                        ['completionPercentage', 'Completion'],
+                        ['assignmentsSubmitted', 'Submitted'],
+                        ['assignmentsGraded', 'Graded'],
+                        ['assignmentAverageScore', 'Assignment Avg'],
+                        ['quizAverageScore', 'Quiz Avg'],
+                      ].map(([key, label]) => (
+                        <th key={key} className="pb-3 font-medium">
+                          <button
+                            type="button"
+                            className="inline-flex items-center gap-2 text-left"
+                            onClick={() => handleSort(key)}
+                          >
+                            {label}
+                            <HiOutlineChevronUpDown className="text-base" />
+                          </button>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {rows.map((row) => (
+                      <tr key={row.student.id}>
+                        <td className="py-4 font-medium text-slate-900">{row.student.fullName}</td>
+                        <td className="py-4">
+                          <div className="w-44">
+                            <div className="flex items-center justify-between text-xs text-slate-500">
+                              <span>{Math.round(row.completionPercentage)}%</span>
+                            </div>
+                            <div className="mt-2 h-2 rounded-full bg-slate-200">
+                              <div
+                                className="h-2 rounded-full bg-primary"
+                                style={{ width: `${Math.min(row.completionPercentage, 100)}%` }}
+                              />
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-4 text-slate-600">{row.assignmentsSubmitted}</td>
+                        <td className="py-4 text-slate-600">{row.assignmentsGraded}</td>
+                        <td className="py-4 text-slate-600">{Math.round(row.assignmentAverageScore)}%</td>
+                        <td className="py-4 text-slate-600">{Math.round(row.quizAverageScore)}%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="mt-6 space-y-4 md:hidden">
                 {rows.map((row) => (
-                  <tr key={row.student.id}>
-                    <td className="py-4 font-medium text-slate-900">{row.student.fullName}</td>
-                    <td className="py-4">
-                      <div className="w-44">
-                        <div className="flex items-center justify-between text-xs text-slate-500">
-                          <span>{Math.round(row.completionPercentage)}%</span>
-                        </div>
-                        <div className="mt-2 h-2 rounded-full bg-slate-200">
-                          <div
-                            className="h-2 rounded-full bg-primary"
-                            style={{ width: `${Math.min(row.completionPercentage, 100)}%` }}
-                          />
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-4 text-slate-600">{row.assignmentsSubmitted}</td>
-                    <td className="py-4 text-slate-600">{row.assignmentsGraded}</td>
-                    <td className="py-4 text-slate-600">{Math.round(row.assignmentAverageScore)}%</td>
-                    <td className="py-4 text-slate-600">{Math.round(row.quizAverageScore)}%</td>
-                  </tr>
+                  <article key={row.student.id} className="rounded-3xl border border-slate-100 bg-slate-50/70 p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="font-semibold text-slate-950">{row.student.fullName}</p>
+                      <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                        {Math.round(row.completionPercentage)}%
+                      </span>
+                    </div>
+                    <div className="mt-3 h-2 rounded-full bg-slate-200">
+                      <div
+                        className="h-2 rounded-full bg-primary"
+                        style={{ width: `${Math.min(row.completionPercentage, 100)}%` }}
+                      />
+                    </div>
+                    <div className="mt-4 grid grid-cols-2 gap-3 text-sm text-slate-500">
+                      <span>Submitted: {row.assignmentsSubmitted}</span>
+                      <span>Graded: {row.assignmentsGraded}</span>
+                      <span>Assignment Avg: {Math.round(row.assignmentAverageScore)}%</span>
+                      <span>Quiz Avg: {Math.round(row.quizAverageScore)}%</span>
+                    </div>
+                  </article>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </div>
+            </>
+          )}
         </section>
 
         <section className="card p-6">
           <h3 className="text-2xl font-bold">Lesson Completion Rates</h3>
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
-            {data.lessonCompletionRates.map((lesson) => (
-              <article key={lesson.lessonId} className="rounded-3xl bg-slate-50 p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <h4 className="font-bold text-slate-950">{lesson.title}</h4>
-                    <p className="mt-1 text-sm text-slate-500">
-                      {lesson.completedCount} students completed this lesson
-                    </p>
+          {data.lessonCompletionRates.length === 0 ? (
+            <div className="mt-6">
+              <EmptyState
+                icon={HiOutlineArrowDownTray}
+                title="No lesson data yet"
+                description="Completion rates will appear after students begin progressing through lessons."
+              />
+            </div>
+          ) : (
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
+              {data.lessonCompletionRates.map((lesson) => (
+                <article key={lesson.lessonId} className="rounded-3xl bg-slate-50 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <h4 className="font-bold text-slate-950">{lesson.title}</h4>
+                      <p className="mt-1 text-sm text-slate-500">
+                        {lesson.completedCount} students completed this lesson
+                      </p>
+                    </div>
+                    <span className="rounded-full bg-primary/10 px-3 py-1 text-sm font-semibold text-primary">
+                      {Math.round(lesson.completionRate)}%
+                    </span>
                   </div>
-                  <span className="rounded-full bg-primary/10 px-3 py-1 text-sm font-semibold text-primary">
-                    {Math.round(lesson.completionRate)}%
-                  </span>
-                </div>
-                <div className="mt-3 h-2 rounded-full bg-slate-200">
-                  <div
-                    className="h-2 rounded-full bg-accent"
-                    style={{ width: `${Math.min(lesson.completionRate, 100)}%` }}
-                  />
-                </div>
-              </article>
-            ))}
-          </div>
+                  <div className="mt-3 h-2 rounded-full bg-slate-200">
+                    <div
+                      className="h-2 rounded-full bg-accent"
+                      style={{ width: `${Math.min(lesson.completionRate, 100)}%` }}
+                    />
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
         </section>
       </div>
     </AppLayout>

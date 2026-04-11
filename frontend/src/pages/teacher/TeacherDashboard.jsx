@@ -8,6 +8,9 @@ import {
 import { Link } from 'react-router-dom';
 import axiosInstance from '../../api/axios';
 import AppLayout from '../../components/layout/AppLayout';
+import EmptyState from '../../components/ui/EmptyState';
+import ErrorAlert from '../../components/ui/ErrorAlert';
+import PageLoader from '../../components/ui/PageLoader';
 import StatCard from '../../components/ui/StatCard';
 import { formatDate } from '../../utils/formatters';
 
@@ -28,7 +31,7 @@ function TeacherDashboard() {
   if (isLoading) {
     return (
       <AppLayout title="Teacher Dashboard">
-        <div className="card p-10 text-center text-slate-500">Loading your dashboard...</div>
+        <PageLoader label="Loading your dashboard..." />
       </AppLayout>
     );
   }
@@ -36,7 +39,10 @@ function TeacherDashboard() {
   if (isError || !data) {
     return (
       <AppLayout title="Teacher Dashboard">
-        <div className="card p-10 text-center text-slate-500">Unable to load your dashboard right now.</div>
+        <ErrorAlert
+          title="We could not load your dashboard"
+          message="Please refresh the page and try again."
+        />
       </AppLayout>
     );
   }
@@ -88,11 +94,16 @@ function TeacherDashboard() {
           </div>
 
           {data.pendingGrading.length === 0 ? (
-            <div className="mt-6 rounded-3xl border border-dashed border-slate-200 px-6 py-12 text-center text-slate-500">
-              Nothing is waiting for grading right now.
+            <div className="mt-6">
+              <EmptyState
+                icon={HiOutlineClipboardDocumentList}
+                title="Nothing is waiting for grading"
+                description="New student submissions will show up here as soon as they arrive."
+              />
             </div>
           ) : (
-            <div className="mt-6 overflow-x-auto">
+            <>
+            <div className="mt-6 hidden overflow-x-auto md:block">
               <table className="min-w-full text-left text-sm">
                 <thead className="border-b border-slate-100 text-slate-400">
                   <tr>
@@ -123,6 +134,29 @@ function TeacherDashboard() {
                 </tbody>
               </table>
             </div>
+            <div className="mt-6 space-y-4 md:hidden">
+              {data.pendingGrading.map((submission) => (
+                <article
+                  key={submission.id}
+                  className={`rounded-3xl border p-4 ${
+                    isOlderThanThreeDays(submission.submittedAt)
+                      ? 'border-amber-200 bg-amber-50/70'
+                      : 'border-slate-100 bg-slate-50/70'
+                  }`}
+                >
+                  <p className="font-semibold text-slate-950">{submission.student?.fullName}</p>
+                  <p className="mt-1 text-sm text-slate-500">{submission.assignment?.title}</p>
+                  <p className="mt-1 text-sm text-slate-400">{submission.course?.title}</p>
+                  <p className="mt-3 text-xs uppercase tracking-[0.2em] text-slate-400">
+                    Submitted {formatDate(submission.submittedAt)}
+                  </p>
+                  <Link to={`/teacher/assignments/${submission.assignment?.id}`} className="btn-secondary mt-4 w-full">
+                    Grade Now
+                  </Link>
+                </article>
+              ))}
+            </div>
+            </>
           )}
         </section>
 
@@ -179,8 +213,12 @@ function TeacherDashboard() {
             </div>
 
             {data.recentActivity.length === 0 ? (
-              <div className="mt-6 rounded-3xl border border-dashed border-slate-200 px-6 py-12 text-center text-slate-500">
-                Activity will appear here once students start engaging.
+              <div className="mt-6">
+                <EmptyState
+                  icon={HiOutlineChartBar}
+                  title="Activity will appear here soon"
+                  description="Once students start submitting work and completing lessons, this live feed will light up."
+                />
               </div>
             ) : (
               <div className="mt-6 space-y-4">

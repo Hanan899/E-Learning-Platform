@@ -1,10 +1,11 @@
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
 import { useMemo, useState } from 'react';
+import ConfirmDialog from '../ui/ConfirmDialog';
 
 function SubmitAssignmentModal({ isOpen, onClose, assignment, onSubmit }) {
   const [response, setResponse] = useState('');
   const [file, setFile] = useState(null);
-  const [isConfirming, setIsConfirming] = useState(false);
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const previewName = useMemo(() => file?.name || '', [file]);
@@ -12,13 +13,13 @@ function SubmitAssignmentModal({ isOpen, onClose, assignment, onSubmit }) {
   const closeModal = () => {
     setResponse('');
     setFile(null);
-    setIsConfirming(false);
+    setIsConfirmDialogOpen(false);
     setIsSubmitting(false);
     onClose();
   };
 
   const handlePrimarySubmit = () => {
-    setIsConfirming(true);
+    setIsConfirmDialogOpen(true);
   };
 
   const handleConfirmedSubmit = async () => {
@@ -37,8 +38,8 @@ function SubmitAssignmentModal({ isOpen, onClose, assignment, onSubmit }) {
   return (
     <Dialog open={isOpen} onClose={closeModal} className="relative z-50">
       <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm" />
-      <div className="fixed inset-0 flex items-center justify-center p-4">
-        <DialogPanel className="card w-full max-w-2xl p-6 shadow-gentle">
+      <div className="fixed inset-0 flex items-end justify-center p-0 sm:items-center sm:p-4">
+        <DialogPanel className="card h-full w-full max-w-2xl rounded-none p-6 shadow-gentle sm:h-auto sm:rounded-3xl">
           <DialogTitle className="text-2xl font-bold">{assignment?.title}</DialogTitle>
           <p className="mt-2 text-sm text-slate-500">{assignment?.description}</p>
 
@@ -72,30 +73,6 @@ function SubmitAssignmentModal({ isOpen, onClose, assignment, onSubmit }) {
               </label>
             </div>
 
-            {isConfirming ? (
-              <div
-                className="rounded-2xl border border-amber-200 bg-amber-50 p-4"
-                data-testid="submit-confirmation"
-              >
-                <p className="font-medium text-slate-900">
-                  Are you sure you want to submit? This cannot be undone.
-                </p>
-                <div className="mt-4 flex justify-end gap-3">
-                  <button type="button" className="btn-secondary" onClick={() => setIsConfirming(false)}>
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    className="btn-primary"
-                    onClick={handleConfirmedSubmit}
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? 'Submitting...' : 'Confirm Submission'}
-                  </button>
-                </div>
-              </div>
-            ) : null}
-
             <div className="flex justify-end gap-3">
               <button type="button" className="btn-secondary" onClick={closeModal}>
                 Close
@@ -105,6 +82,17 @@ function SubmitAssignmentModal({ isOpen, onClose, assignment, onSubmit }) {
               </button>
             </div>
           </div>
+
+          <ConfirmDialog
+            title="Submit assignment?"
+            message="Are you sure you want to submit? This cannot be undone."
+            confirmLabel="Confirm Submission"
+            isOpen={isConfirmDialogOpen}
+            isPending={isSubmitting}
+            testId="submit-confirmation"
+            onClose={() => setIsConfirmDialogOpen(false)}
+            onConfirm={handleConfirmedSubmit}
+          />
         </DialogPanel>
       </div>
     </Dialog>

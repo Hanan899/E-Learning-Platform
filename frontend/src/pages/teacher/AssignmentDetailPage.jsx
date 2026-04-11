@@ -5,6 +5,9 @@ import { HiOutlineClipboardDocumentList } from 'react-icons/hi2';
 import { useParams } from 'react-router-dom';
 import axiosInstance from '../../api/axios';
 import AppLayout from '../../components/layout/AppLayout';
+import EmptyState from '../../components/ui/EmptyState';
+import ErrorAlert from '../../components/ui/ErrorAlert';
+import PageLoader from '../../components/ui/PageLoader';
 import { formatDate, formatScore } from '../../utils/formatters';
 
 const fetchAssignmentDetail = async (id) => {
@@ -56,7 +59,18 @@ function AssignmentDetailPage() {
   if (isLoading) {
     return (
       <AppLayout title="Assignment Detail">
-        <div className="card p-10 text-center text-slate-500">Loading assignment details...</div>
+        <PageLoader label="Loading assignment details..." />
+      </AppLayout>
+    );
+  }
+
+  if (!assignment) {
+    return (
+      <AppLayout title="Assignment Detail">
+        <ErrorAlert
+          title="We could not load this assignment"
+          message="Please refresh the page and try again."
+        />
       </AppLayout>
     );
   }
@@ -106,25 +120,79 @@ function AssignmentDetailPage() {
               </span>
             </div>
 
-            <div className="mt-6 overflow-x-auto">
-              <table className="min-w-full text-left text-sm">
-                <thead className="border-b border-slate-100 text-slate-400">
-                  <tr>
-                    <th className="pb-3 font-medium">Student name</th>
-                    <th className="pb-3 font-medium">Submitted at</th>
-                    <th className="pb-3 font-medium">Status</th>
-                    <th className="pb-3 font-medium">Score</th>
-                    <th className="pb-3 text-right font-medium">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
+            {submissions.length === 0 ? (
+              <div className="mt-6">
+                <EmptyState
+                  icon={HiOutlineClipboardDocumentList}
+                  title="No submissions yet"
+                  description="Student work will show up here as soon as submissions come in."
+                />
+              </div>
+            ) : (
+              <>
+                <div className="mt-6 hidden overflow-x-auto md:block">
+                  <table className="min-w-full text-left text-sm">
+                    <thead className="border-b border-slate-100 text-slate-400">
+                      <tr>
+                        <th className="pb-3 font-medium">Student name</th>
+                        <th className="pb-3 font-medium">Submitted at</th>
+                        <th className="pb-3 font-medium">Status</th>
+                        <th className="pb-3 font-medium">Score</th>
+                        <th className="pb-3 text-right font-medium">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {submissions.map((submission) => (
+                        <tr key={submission.id}>
+                          <td className="py-4 font-medium text-slate-900">
+                            {submission.student?.firstName} {submission.student?.lastName}
+                          </td>
+                          <td className="py-4 text-slate-600">{formatDate(submission.submittedAt)}</td>
+                          <td className="py-4">
+                            <span
+                              className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                                submission.status === 'graded'
+                                  ? 'bg-emerald-100 text-emerald-700'
+                                  : 'bg-amber-100 text-amber-700'
+                              }`}
+                            >
+                              {submission.status}
+                            </span>
+                          </td>
+                          <td className="py-4 text-slate-600">
+                            {submission.score !== null && submission.score !== undefined
+                              ? formatScore(submission.score, assignment.maxScore)
+                              : 'Not graded'}
+                          </td>
+                          <td className="py-4 text-right">
+                            <button
+                              type="button"
+                              className="btn-secondary px-4"
+                              onClick={() => {
+                                setSelectedSubmission(submission);
+                                setGradeForm({
+                                  score: submission.score ?? '',
+                                  feedback: submission.feedback ?? '',
+                                });
+                              }}
+                            >
+                              Grade
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="mt-6 space-y-4 md:hidden">
                   {submissions.map((submission) => (
-                    <tr key={submission.id}>
-                      <td className="py-4 font-medium text-slate-900">
+                    <article key={submission.id} className="rounded-3xl border border-slate-100 bg-slate-50/70 p-4">
+                      <p className="font-semibold text-slate-950">
                         {submission.student?.firstName} {submission.student?.lastName}
-                      </td>
-                      <td className="py-4 text-slate-600">{formatDate(submission.submittedAt)}</td>
-                      <td className="py-4">
+                      </p>
+                      <p className="mt-2 text-sm text-slate-500">{formatDate(submission.submittedAt)}</p>
+                      <div className="mt-3 flex flex-wrap gap-2">
                         <span
                           className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
                             submission.status === 'graded'
@@ -134,32 +202,30 @@ function AssignmentDetailPage() {
                         >
                           {submission.status}
                         </span>
-                      </td>
-                      <td className="py-4 text-slate-600">
-                        {submission.score !== null && submission.score !== undefined
-                          ? formatScore(submission.score, assignment.maxScore)
-                          : 'Not graded'}
-                      </td>
-                      <td className="py-4 text-right">
-                        <button
-                          type="button"
-                          className="btn-secondary px-4"
-                          onClick={() => {
-                            setSelectedSubmission(submission);
-                            setGradeForm({
-                              score: submission.score ?? '',
-                              feedback: submission.feedback ?? '',
-                            });
-                          }}
-                        >
-                          Grade
-                        </button>
-                      </td>
-                    </tr>
+                        <span className="inline-flex rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-600">
+                          {submission.score !== null && submission.score !== undefined
+                            ? formatScore(submission.score, assignment.maxScore)
+                            : 'Not graded'}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        className="btn-secondary mt-4 w-full"
+                        onClick={() => {
+                          setSelectedSubmission(submission);
+                          setGradeForm({
+                            score: submission.score ?? '',
+                            feedback: submission.feedback ?? '',
+                          });
+                        }}
+                      >
+                        Grade
+                      </button>
+                    </article>
                   ))}
-                </tbody>
-              </table>
-            </div>
+                </div>
+              </>
+            )}
           </section>
         </div>
 
