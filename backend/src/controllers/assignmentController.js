@@ -3,7 +3,6 @@ const {
   Assignment,
   Course,
   Enrollment,
-  Notification,
   Submission,
   User,
 } = require('../models');
@@ -16,6 +15,7 @@ const {
   serializeAssignment,
   serializeSubmission,
 } = require('../utils/assignmentHelpers');
+const { createNotification, createNotifications } = require('../utils/notificationService');
 
 const toIsoDate = (value) => {
   const parsed = new Date(value);
@@ -67,15 +67,13 @@ const createAssignment = async (req, res, next) => {
     });
 
     if (enrollments.length > 0) {
-      const createdAt = new Date().toISOString();
-      await Notification.bulkCreate(
-        enrollments.map((enrollment) => ({
-          userId: enrollment.studentId,
+      await createNotifications(
+        enrollments.map((enrollment) => enrollment.studentId),
+        {
           title: 'New assignment posted',
           message: `New assignment: ${assignment.title} due ${new Date(dueDate).toLocaleDateString('en-US')}`,
           type: 'deadline',
-          createdAt,
-        }))
+        }
       );
     }
 
@@ -373,12 +371,10 @@ const gradeSubmission = async (req, res, next) => {
       status: 'graded',
     });
 
-    await Notification.create({
-      userId: ownership.submission.studentId,
+    await createNotification(ownership.submission.studentId, {
       title: 'Assignment graded',
-      message: `Your assignment ${ownership.assignment.title} has been graded: ${score}/${ownership.assignment.maxScore}`,
+      message: `Assignment graded: ${score}/${ownership.assignment.maxScore}`,
       type: 'grade',
-      createdAt: new Date().toISOString(),
     });
 
     return success(res, {

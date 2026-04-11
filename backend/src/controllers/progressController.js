@@ -270,10 +270,18 @@ const getStudentDashboard = async (req, res, next) => {
         weeklyActivityMap.set(key, (weeklyActivityMap.get(key) || 0) + 1);
       });
 
+    const currentUtcDate = new Date();
+    const utcDayStart = new Date(
+      Date.UTC(
+        currentUtcDate.getUTCFullYear(),
+        currentUtcDate.getUTCMonth(),
+        currentUtcDate.getUTCDate()
+      )
+    );
+
     const weeklyActivity = Array.from({ length: 7 }, (_, index) => {
-      const date = new Date();
-      date.setHours(0, 0, 0, 0);
-      date.setDate(date.getDate() - (6 - index));
+      const date = new Date(utcDayStart);
+      date.setUTCDate(date.getUTCDate() - (6 - index));
       const key = date.toISOString().slice(0, 10);
 
       return {

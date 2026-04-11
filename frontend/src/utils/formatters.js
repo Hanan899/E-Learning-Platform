@@ -20,3 +20,27 @@ export const truncate = (text, length = 100) => {
 
 export const getInitials = (firstName = '', lastName = '') =>
   `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+
+export const formatRelativeTime = (date) => {
+  const timestamp = new Date(date).getTime();
+
+  if (Number.isNaN(timestamp)) {
+    return '';
+  }
+
+  const diff = timestamp - Date.now();
+  const formatter = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+  const minute = 60 * 1000;
+  const hour = 60 * minute;
+  const day = 24 * hour;
+
+  if (Math.abs(diff) < hour) {
+    return formatter.format(Math.round(diff / minute) || -1, 'minute');
+  }
+
+  if (Math.abs(diff) < day) {
+    return formatter.format(Math.round(diff / hour), 'hour');
+  }
+
+  return formatter.format(Math.round(diff / day), 'day');
+};

@@ -26,6 +26,21 @@ vi.mock('../src/api/axios', () => ({
   default: mockedAxios,
 }));
 
+const createNotificationResponse = () => ({
+  data: {
+    data: {
+      notifications: [],
+      unreadCount: 0,
+    },
+    pagination: {
+      total: 0,
+      page: 1,
+      limit: 20,
+      totalPages: 0,
+    },
+  },
+});
+
 const renderWithProviders = (ui, { role = 'student', route = '/' } = {}) =>
   render(
     <QueryClientProvider client={new QueryClient()}>
@@ -61,21 +76,35 @@ describe('Course pages', () => {
   });
 
   test('CourseCatalogPage renders course cards from API', async () => {
-    mockedAxios.get.mockResolvedValueOnce({
-      data: {
-        data: {
-          courses: [
-            {
-              id: 'course-1',
-              title: 'Math Basics',
-              category: 'Math',
-              teacher: { fullName: 'Grace Teacher' },
-              lessonCount: 4,
-              isEnrolled: false,
+    mockedAxios.get.mockImplementation((url) => {
+      if (url === '/courses') {
+        return Promise.resolve({
+          data: {
+            data: {
+              courses: [
+                {
+                  id: 'course-1',
+                  title: 'Math Basics',
+                  category: 'Math',
+                  teacher: { fullName: 'Grace Teacher' },
+                  lessonCount: 4,
+                  isEnrolled: false,
+                },
+              ],
             },
-          ],
-        },
-      },
+          },
+        });
+      }
+
+      if (url === '/notifications') {
+        return Promise.resolve(createNotificationResponse());
+      }
+
+      if (url === '/notifications/count') {
+        return Promise.resolve({ data: { data: { unreadCount: 0 } } });
+      }
+
+      return Promise.reject(new Error(`Unhandled GET ${url}`));
     });
 
     renderWithProviders(<CourseCatalogPage />);
@@ -85,21 +114,35 @@ describe('Course pages', () => {
   });
 
   test('Enroll button calls enroll API and updates UI', async () => {
-    mockedAxios.get.mockResolvedValue({
-      data: {
-        data: {
-          courses: [
-            {
-              id: 'course-1',
-              title: 'Physics',
-              category: 'Science',
-              teacher: { fullName: 'Grace Teacher' },
-              lessonCount: 5,
-              isEnrolled: false,
+    mockedAxios.get.mockImplementation((url) => {
+      if (url === '/courses') {
+        return Promise.resolve({
+          data: {
+            data: {
+              courses: [
+                {
+                  id: 'course-1',
+                  title: 'Physics',
+                  category: 'Science',
+                  teacher: { fullName: 'Grace Teacher' },
+                  lessonCount: 5,
+                  isEnrolled: false,
+                },
+              ],
             },
-          ],
-        },
-      },
+          },
+        });
+      }
+
+      if (url === '/notifications') {
+        return Promise.resolve(createNotificationResponse());
+      }
+
+      if (url === '/notifications/count') {
+        return Promise.resolve({ data: { data: { unreadCount: 0 } } });
+      }
+
+      return Promise.reject(new Error(`Unhandled GET ${url}`));
     });
     mockedAxios.post.mockResolvedValue({ data: { success: true } });
 
@@ -113,26 +156,40 @@ describe('Course pages', () => {
   });
 
   test('CourseEditorPage shows lesson list in sidebar', async () => {
-    mockedAxios.get.mockResolvedValueOnce({
-      data: {
-        data: {
-          course: {
-            id: 'course-1',
-            title: 'History',
-            isPublished: false,
-            sections: [
-              {
-                id: 'section-1',
-                title: 'Origins',
-                lessons: [
-                  { id: 'lesson-1', title: 'Lesson A', content: 'Alpha', materials: [] },
-                  { id: 'lesson-2', title: 'Lesson B', content: 'Beta', materials: [] },
+    mockedAxios.get.mockImplementation((url) => {
+      if (url === '/courses/course-1') {
+        return Promise.resolve({
+          data: {
+            data: {
+              course: {
+                id: 'course-1',
+                title: 'History',
+                isPublished: false,
+                sections: [
+                  {
+                    id: 'section-1',
+                    title: 'Origins',
+                    lessons: [
+                      { id: 'lesson-1', title: 'Lesson A', content: 'Alpha', materials: [] },
+                      { id: 'lesson-2', title: 'Lesson B', content: 'Beta', materials: [] },
+                    ],
+                  },
                 ],
               },
-            ],
+            },
           },
-        },
-      },
+        });
+      }
+
+      if (url === '/notifications') {
+        return Promise.resolve(createNotificationResponse());
+      }
+
+      if (url === '/notifications/count') {
+        return Promise.resolve({ data: { data: { unreadCount: 0 } } });
+      }
+
+      return Promise.reject(new Error(`Unhandled GET ${url}`));
     });
 
     renderWithProviders(
@@ -147,29 +204,43 @@ describe('Course pages', () => {
   });
 
   test('progress bar shows correct percentage', async () => {
-    mockedAxios.get.mockResolvedValueOnce({
-      data: {
-        data: {
-          course: {
-            id: 'course-1',
-            title: 'Biology',
-            category: 'Science',
-            teacher: { firstName: 'Grace', lastName: 'Teacher' },
-            description: 'Course description',
-            sections: [
-              {
-                id: 'section-1',
-                title: 'Cells',
-                lessons: [{ id: 'lesson-1', title: 'Cell Basics', content: 'Content', materials: [] }],
+    mockedAxios.get.mockImplementation((url) => {
+      if (url === '/courses/course-1') {
+        return Promise.resolve({
+          data: {
+            data: {
+              course: {
+                id: 'course-1',
+                title: 'Biology',
+                category: 'Science',
+                teacher: { firstName: 'Grace', lastName: 'Teacher' },
+                description: 'Course description',
+                sections: [
+                  {
+                    id: 'section-1',
+                    title: 'Cells',
+                    lessons: [{ id: 'lesson-1', title: 'Cell Basics', content: 'Content', materials: [] }],
+                  },
+                ],
+                studentProgress: {
+                  completionPercentage: 75,
+                  completedLessonIds: ['lesson-1'],
+                },
               },
-            ],
-            studentProgress: {
-              completionPercentage: 75,
-              completedLessonIds: ['lesson-1'],
             },
           },
-        },
-      },
+        });
+      }
+
+      if (url === '/notifications') {
+        return Promise.resolve(createNotificationResponse());
+      }
+
+      if (url === '/notifications/count') {
+        return Promise.resolve({ data: { data: { unreadCount: 0 } } });
+      }
+
+      return Promise.reject(new Error(`Unhandled GET ${url}`));
     });
 
     renderWithProviders(

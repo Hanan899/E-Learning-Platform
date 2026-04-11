@@ -1,6 +1,7 @@
 const { Op, fn, col, where } = require('sequelize');
-const { Notification, User } = require('../models');
+const { User } = require('../models');
 const { success, error } = require('../utils/responseHelper');
+const { createNotification } = require('../utils/notificationService');
 const {
   normalizeEmail,
   passwordRegex,
@@ -42,8 +43,7 @@ const register = async (req, res, next) => {
       role: 'student',
     });
 
-    await Notification.create({
-      userId: user.id,
+    await createNotification(user.id, {
       title: 'Welcome to EduFlow',
       message: 'Your student account is ready. Start exploring available courses.',
       type: 'announcement',

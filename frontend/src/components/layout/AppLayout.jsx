@@ -1,5 +1,6 @@
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
-import { HiChevronDown, HiOutlineBell } from 'react-icons/hi2';
+import { HiChevronDown } from 'react-icons/hi2';
+import NotificationBell from './NotificationBell';
 import { useAuth } from '../../hooks/useAuth';
 import { getInitials } from '../../utils/formatters';
 import Sidebar from './Sidebar';
@@ -21,13 +22,7 @@ function AppLayout({ title, children }) {
             </div>
 
             <div className="flex items-center gap-3">
-              <button
-                type="button"
-                className="relative inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 shadow-sm"
-              >
-                <HiOutlineBell className="text-xl" />
-                <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-primary" />
-              </button>
+              <NotificationBell />
 
               <Menu as="div" className="relative">
                 <MenuButton className="inline-flex min-h-[44px] items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm">

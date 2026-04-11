@@ -21,6 +21,21 @@ vi.mock('../src/api/axios', () => ({
   default: mockedAxios,
 }));
 
+const createNotificationResponse = () => ({
+  data: {
+    data: {
+      notifications: [],
+      unreadCount: 0,
+    },
+    pagination: {
+      total: 0,
+      page: 1,
+      limit: 20,
+      totalPages: 0,
+    },
+  },
+});
+
 const renderWithProviders = (ui) =>
   render(
     <QueryClientProvider client={new QueryClient()}>
@@ -52,18 +67,32 @@ describe('Dashboard pages', () => {
   });
 
   test('StudentDashboard renders all 4 stat cards', async () => {
-    mockedAxios.get.mockResolvedValueOnce({
-      data: {
-        data: {
-          enrolledCourses: [],
-          recentGrades: [],
-          upcomingDeadlines: [],
-          quizStats: { attempted: 5, averageScore: 72 },
-          overallProgress: { totalLessons: 40, completed: 25 },
-          weeklyActivity: [],
-          gradeStats: { averageScore: 84, gradedCount: 3 },
-        },
-      },
+    mockedAxios.get.mockImplementation((url) => {
+      if (url === '/student/dashboard') {
+        return Promise.resolve({
+          data: {
+            data: {
+              enrolledCourses: [],
+              recentGrades: [],
+              upcomingDeadlines: [],
+              quizStats: { attempted: 5, averageScore: 72 },
+              overallProgress: { totalLessons: 40, completed: 25 },
+              weeklyActivity: [],
+              gradeStats: { averageScore: 84, gradedCount: 3 },
+            },
+          },
+        });
+      }
+
+      if (url === '/notifications') {
+        return Promise.resolve(createNotificationResponse());
+      }
+
+      if (url === '/notifications/count') {
+        return Promise.resolve({ data: { data: { unreadCount: 0 } } });
+      }
+
+      return Promise.reject(new Error(`Unhandled GET ${url}`));
     });
 
     renderWithProviders(<StudentDashboard />);
@@ -97,33 +126,47 @@ describe('Dashboard pages', () => {
   });
 
   test('upcoming deadlines are sorted by date ascending', async () => {
-    mockedAxios.get.mockResolvedValueOnce({
-      data: {
-        data: {
-          enrolledCourses: [],
-          recentGrades: [],
-          upcomingDeadlines: [
-            {
-              assignmentId: 'assignment-2',
-              assignment: 'Later deadline',
-              dueDate: '2026-04-20T00:00:00.000Z',
-              courseTitle: 'Science',
-              submitted: false,
+    mockedAxios.get.mockImplementation((url) => {
+      if (url === '/student/dashboard') {
+        return Promise.resolve({
+          data: {
+            data: {
+              enrolledCourses: [],
+              recentGrades: [],
+              upcomingDeadlines: [
+                {
+                  assignmentId: 'assignment-2',
+                  assignment: 'Later deadline',
+                  dueDate: '2026-04-20T00:00:00.000Z',
+                  courseTitle: 'Science',
+                  submitted: false,
+                },
+                {
+                  assignmentId: 'assignment-1',
+                  assignment: 'Sooner deadline',
+                  dueDate: '2026-04-14T00:00:00.000Z',
+                  courseTitle: 'Math',
+                  submitted: false,
+                },
+              ],
+              quizStats: { attempted: 0, averageScore: 0 },
+              overallProgress: { totalLessons: 0, completed: 0 },
+              weeklyActivity: [],
+              gradeStats: { averageScore: 0, gradedCount: 0 },
             },
-            {
-              assignmentId: 'assignment-1',
-              assignment: 'Sooner deadline',
-              dueDate: '2026-04-14T00:00:00.000Z',
-              courseTitle: 'Math',
-              submitted: false,
-            },
-          ],
-          quizStats: { attempted: 0, averageScore: 0 },
-          overallProgress: { totalLessons: 0, completed: 0 },
-          weeklyActivity: [],
-          gradeStats: { averageScore: 0, gradedCount: 0 },
-        },
-      },
+          },
+        });
+      }
+
+      if (url === '/notifications') {
+        return Promise.resolve(createNotificationResponse());
+      }
+
+      if (url === '/notifications/count') {
+        return Promise.resolve({ data: { data: { unreadCount: 0 } } });
+      }
+
+      return Promise.reject(new Error(`Unhandled GET ${url}`));
     });
 
     renderWithProviders(<StudentDashboard />);

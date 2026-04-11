@@ -7,6 +7,7 @@ import AssignmentDetailPage from './pages/teacher/AssignmentDetailPage';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import NotFoundPage from './pages/NotFoundPage';
+import NotificationsPage from './pages/NotificationsPage';
 import QuizPage from './pages/student/QuizPage';
 import StudentQuizzesPage from './pages/student/StudentQuizzesPage';
 import QuizBuilderPage from './pages/teacher/QuizBuilderPage';
@@ -44,6 +45,10 @@ function App() {
           </ProtectedRoute>
         }
       />
+
+      <Route element={<ProtectedRoute />}>
+        <Route path="/notifications" element={<NotificationsPage />} />
+      </Route>
 
       <Route element={<ProtectedRoute roles={['admin']} />}>
         <Route path="/admin" element={<AdminDashboard />} />
