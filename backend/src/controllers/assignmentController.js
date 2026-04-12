@@ -371,9 +371,10 @@ const gradeSubmission = async (req, res, next) => {
       status: 'graded',
     });
 
+    const teacherName = `${req.user.firstName} ${req.user.lastName}`.trim();
     await createNotification(ownership.submission.studentId, {
       title: 'Assignment graded',
-      message: `Assignment graded: ${score}/${ownership.assignment.maxScore}`,
+      message: `${teacherName} has graded your assignment '${ownership.assignment.title}': ${score}/${ownership.assignment.maxScore}. Assignment graded: ${score}/${ownership.assignment.maxScore}`,
       type: 'grade',
     });
 

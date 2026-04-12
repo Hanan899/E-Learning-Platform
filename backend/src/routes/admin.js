@@ -49,4 +49,52 @@ router.delete(
 
 router.get('/stats', adminController.getDashboardStats);
 
+router.get(
+  '/courses',
+  [
+    query('status').optional({ values: 'falsy' }).isIn(['published', 'draft']),
+    query('category').optional({ values: 'falsy' }).isString(),
+    query('teacherId').optional({ values: 'falsy' }).isUUID(),
+    query('search').optional({ values: 'falsy' }).isString(),
+    validateRequest,
+  ],
+  adminController.getAdminCourses
+);
+
+router.put(
+  '/courses/:id/status',
+  [
+    param('id').isUUID().withMessage('Course id must be a valid UUID'),
+    body('isPublished').isBoolean().withMessage('isPublished must be a boolean'),
+    validateRequest,
+  ],
+  adminController.updateCourseStatus
+);
+
+router.delete(
+  '/courses/:id',
+  [
+    param('id').isUUID().withMessage('Course id must be a valid UUID'),
+    body('confirm').custom((value) => value === true).withMessage('confirm must be true'),
+    validateRequest,
+  ],
+  adminController.deleteCourseAdmin
+);
+
+router.get('/reports/overview', adminController.getReportsOverview);
+
+router.get(
+  '/reports/course/:id',
+  [param('id').isUUID().withMessage('Course id must be a valid UUID'), validateRequest],
+  adminController.getCourseReport
+);
+
+router.get(
+  '/reports/student/:id',
+  [param('id').isUUID().withMessage('Student id must be a valid UUID'), validateRequest],
+  adminController.getStudentReport
+);
+
+router.get('/reports/activity', adminController.getActivityReport);
+
 module.exports = router;

@@ -52,9 +52,12 @@ function CourseCard({ course }) {
           <span>{course.enrollmentCount} enrollments</span>
         </div>
 
-        <div className="mt-5 flex gap-3">
+        <div className="mt-5 grid gap-3 sm:grid-cols-3">
           <Link to={`/teacher/courses/${course.id}/edit`} className="btn-primary flex-1 text-center">
             Edit
+          </Link>
+          <Link to={`/teacher/courses/${course.id}/gradebook`} className="btn-secondary flex-1 text-center">
+            Gradebook
           </Link>
           <Link to={`/student/courses/${course.id}`} className="btn-secondary flex-1 text-center">
             View
