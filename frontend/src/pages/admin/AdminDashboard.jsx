@@ -180,12 +180,12 @@ function AdminDashboard() {
             <Link to="/admin/users" className="btn-primary">
               Manage users
             </Link>
-            <button type="button" className="btn-secondary">
+            <Link to="/admin/reports" className="btn-secondary">
               Review reports
-            </button>
-            <button type="button" className="btn-secondary">
+            </Link>
+            <Link to="/admin/courses" className="btn-secondary">
               Audit course catalog
-            </button>
+            </Link>
           </div>
         </article>
       </section>

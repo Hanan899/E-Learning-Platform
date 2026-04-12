@@ -3,6 +3,8 @@ import ProtectedRoute from './components/common/ProtectedRoute';
 import ErrorBoundary from './components/ui/ErrorBoundary';
 import { useAuth } from './hooks/useAuth';
 import AdminDashboard from './pages/admin/AdminDashboard';
+import CoursesManagementPage from './pages/admin/CoursesManagementPage';
+import ReportsPage from './pages/admin/ReportsPage';
 import UsersPage from './pages/admin/UsersPage';
 import AssignmentDetailPage from './pages/teacher/AssignmentDetailPage';
 import LoginPage from './pages/auth/LoginPage';
@@ -15,7 +17,6 @@ import QuizBuilderPage from './pages/teacher/QuizBuilderPage';
 import QuizResultsPage from './pages/teacher/QuizResultsPage';
 import TeacherQuizzesPage from './pages/teacher/TeacherQuizzesPage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
-import ComingSoonPage from './pages/shared/ComingSoonPage';
 import CourseCatalogPage from './pages/student/CourseCatalogPage';
 import CourseViewPage from './pages/student/CourseViewPage';
 import StudentAssignmentsPage from './pages/student/StudentAssignmentsPage';
@@ -23,7 +24,9 @@ import StudentDashboard from './pages/student/StudentDashboard';
 import AssignmentsPage from './pages/teacher/AssignmentsPage';
 import CourseProgressPage from './pages/teacher/CourseProgressPage';
 import CourseEditorPage from './pages/teacher/CourseEditorPage';
+import GradebookPage from './pages/teacher/GradebookPage';
 import MyCoursesPage from './pages/teacher/MyCoursesPage';
+import PendingGradingPage from './pages/teacher/PendingGradingPage';
 import TeacherDashboard from './pages/teacher/TeacherDashboard';
 import { getDefaultRouteForRole } from './utils/auth';
 
@@ -55,8 +58,8 @@ function App() {
         <Route element={<ProtectedRoute roles={['admin']} />}>
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/users" element={<UsersPage />} />
-          <Route path="/admin/courses" element={<ComingSoonPage title="All Courses" />} />
-          <Route path="/admin/reports" element={<ComingSoonPage title="Reports" />} />
+          <Route path="/admin/courses" element={<CoursesManagementPage />} />
+          <Route path="/admin/reports" element={<ReportsPage />} />
         </Route>
 
         <Route element={<ProtectedRoute roles={['teacher']} />}>
@@ -64,12 +67,13 @@ function App() {
           <Route path="/teacher/courses" element={<MyCoursesPage />} />
           <Route path="/teacher/courses/:id/edit" element={<CourseEditorPage />} />
           <Route path="/teacher/courses/:id/progress" element={<CourseProgressPage />} />
+          <Route path="/teacher/courses/:id/gradebook" element={<GradebookPage />} />
           <Route path="/teacher/assignments" element={<AssignmentsPage />} />
           <Route path="/teacher/assignments/:id" element={<AssignmentDetailPage />} />
           <Route path="/teacher/quizzes" element={<TeacherQuizzesPage />} />
           <Route path="/teacher/quizzes/:id/build" element={<QuizBuilderPage />} />
           <Route path="/teacher/quizzes/:id/results" element={<QuizResultsPage />} />
-          <Route path="/teacher/grades" element={<ComingSoonPage title="Grades" />} />
+          <Route path="/teacher/grading" element={<PendingGradingPage />} />
         </Route>
 
         <Route element={<ProtectedRoute roles={['student']} />}>

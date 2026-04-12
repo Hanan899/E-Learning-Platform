@@ -27,7 +27,7 @@ export const navConfig = {
     { name: 'My Courses', to: '/teacher/courses', icon: HiOutlineBookOpen },
     { name: 'Assignments', to: '/teacher/assignments', icon: HiOutlineClipboardDocumentList },
     { name: 'Quizzes', to: '/teacher/quizzes', icon: HiOutlineQuestionMarkCircle },
-    { name: 'Grades', to: '/teacher/grades', icon: HiOutlineChartBar },
+    { name: 'Grades', to: '/teacher/grading', icon: HiOutlineChartBar },
   ],
   student: [
     { name: 'Dashboard', to: '/student/dashboard', icon: HiOutlineHome },
