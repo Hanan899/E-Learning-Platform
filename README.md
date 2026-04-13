@@ -60,35 +60,86 @@ SQLITE_STORAGE=./data/elearning.sqlite
 
 # One-time source database for:
 # npm run db:migrate:postgres-to-sqlite
-SOURCE_PG_HOST=localhost
-SOURCE_PG_PORT=5432
-SOURCE_PG_NAME=elearning_db
-SOURCE_PG_USER=postgres
-SOURCE_PG_PASSWORD=yourpassword
+# Fill these only if you later migrate existing Postgres data into SQLite
+# SOURCE_PG_HOST=localhost
+# SOURCE_PG_PORT=5432
+# SOURCE_PG_NAME=elearning_db
+# SOURCE_PG_USER=postgres
+# SOURCE_PG_PASSWORD=yourpassword
 ```
 
-4. Sync and seed the SQLite database:
+4. Create a fresh empty SQLite database:
    `npm run db:sync`
-   `npm run seed`
 
-5. If you need to import existing PostgreSQL data into SQLite:
-   `npm run db:migrate:postgres-to-sqlite`
-
-6. Start the backend:
+5. Start the backend:
    `npm run dev`
 
-7. In a new terminal, install frontend dependencies:
+6. In a new terminal, install frontend dependencies:
    `cd ../frontend`
    `npm install`
 
-8. Configure frontend environment in `frontend/.env`:
+7. Configure frontend environment in `frontend/.env`:
 
 ```env
 VITE_API_URL=http://localhost:5001/api
 ```
 
-9. Start the frontend:
+8. Start the frontend:
    `npm run dev`
+
+## Fresh Data Workflow
+
+Use this flow when handing the project to a client who should start with their own data instead of demo data.
+
+1. Do not run `npm run seed`.
+2. Run only:
+   `cd backend`
+   `npm run db:sync`
+   `npm run dev`
+3. Start the frontend:
+   `cd ../frontend`
+   `npm install`
+   `npm run dev`
+4. Open the app and register users normally from the UI.
+5. Create real courses, lessons, assignments, quizzes, and enrollments from the app after the required roles are assigned.
+
+Important limitation:
+- Public registration currently creates `student` accounts only.
+- To create the first `teacher` or `admin`, first register the user, then update that user's `role` in the SQLite database.
+
+Example role updates in SQLite:
+
+```sql
+UPDATE users SET role = 'admin' WHERE email = 'owner@example.com';
+UPDATE users SET role = 'teacher' WHERE email = 'teacher@example.com';
+```
+
+You can run those with any SQLite tool, such as DB Browser for SQLite, against `backend/data/elearning.sqlite`.
+
+## Reset To Empty Data
+
+To start over with a completely fresh database:
+
+1. Stop the backend.
+2. Delete `backend/data/elearning.sqlite`.
+3. Run `cd backend && npm run db:sync`.
+
+## Optional Demo Data
+
+If you want demo content for development or presentations, you can still use:
+
+```bash
+cd backend
+npm run seed
+```
+
+## Optional PostgreSQL Import
+
+If you ever need to import an existing PostgreSQL database into SQLite:
+
+1. Fill in the `SOURCE_PG_*` values in `backend/.env`.
+2. Run:
+   `cd backend && npm run db:migrate:postgres-to-sqlite`
 
 ## Test Commands
 
@@ -96,7 +147,9 @@ VITE_API_URL=http://localhost:5001/api
 - Frontend: `cd frontend && npm test`
 - Frontend production build: `cd frontend && npm run build`
 
-## Seeded Credentials
+## Demo Seeded Credentials
+
+Only available if you run `npm run seed`.
 
 - Admin: `admin@school.com` / `Admin123!`
 - Teacher: `teacher@school.com` / `Teacher123!`
