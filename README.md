@@ -50,22 +50,8 @@ JWT_EXPIRES_IN=7d
 DB_DIALECT=sqlite
 SQLITE_STORAGE=./data/elearning.sqlite
 
-# Optional runtime Postgres settings
-# Only used if DB_DIALECT=postgres
-# DB_HOST=localhost
-# DB_PORT=5432
-# DB_NAME=elearning_db
-# DB_USER=postgres
-# DB_PASSWORD=yourpassword
-
 # One-time source database for:
 # npm run db:migrate:postgres-to-sqlite
-# Fill these only if you later migrate existing Postgres data into SQLite
-# SOURCE_PG_HOST=localhost
-# SOURCE_PG_PORT=5432
-# SOURCE_PG_NAME=elearning_db
-# SOURCE_PG_USER=postgres
-# SOURCE_PG_PASSWORD=yourpassword
 ```
 
 4. Create a fresh empty SQLite database:
