@@ -27,7 +27,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.TEXT,
         allowNull: true,
       },
-      status: enumField(DataTypes, ['submitted', 'graded'], {
+      status: enumField(sequelize, DataTypes, ['submitted', 'graded'], {
         allowNull: false,
         defaultValue: 'submitted',
       }),

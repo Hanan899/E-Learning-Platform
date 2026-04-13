@@ -42,7 +42,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
-      role: enumField(DataTypes, ['admin', 'teacher', 'student'], {
+      role: enumField(sequelize, DataTypes, ['admin', 'teacher', 'student'], {
         allowNull: false,
         defaultValue: 'student',
       }),

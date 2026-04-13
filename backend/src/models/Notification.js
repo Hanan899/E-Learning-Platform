@@ -23,7 +23,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.TEXT,
         allowNull: false,
       },
-      type: enumField(DataTypes, ['grade', 'announcement', 'deadline', 'enrollment'], {
+      type: enumField(sequelize, DataTypes, ['grade', 'announcement', 'deadline', 'enrollment'], {
         allowNull: false,
       }),
       isRead: {

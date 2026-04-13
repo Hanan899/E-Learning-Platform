@@ -15,18 +15,13 @@ describe('Database Connection', () => {
     await sequelize.close();
   });
 
-  test('connects to PostgreSQL successfully', async () => {
+  test('connects to SQLite successfully', async () => {
     await expect(sequelize.authenticate()).resolves.toBeUndefined();
+    expect(sequelize.getDialect()).toBe('sqlite');
   });
 
   test('all models are synced', async () => {
-    let tables;
-
-    try {
-      tables = await sequelize.showAllSchemas();
-    } catch (_error) {
-      tables = await sequelize.getQueryInterface().showAllTables();
-    }
+    const tables = await sequelize.getQueryInterface().showAllTables();
 
     expect(tables.length).toBeGreaterThan(0);
   });

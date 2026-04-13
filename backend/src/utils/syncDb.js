@@ -1,8 +1,9 @@
 const { DataTypes } = require('sequelize');
+const { connectDatabase } = require('../config/database');
 const { sequelize } = require('../models');
 
 const sync = async () => {
-  await sequelize.authenticate();
+  await connectDatabase(sequelize);
   await sequelize.sync();
   const queryInterface = sequelize.getQueryInterface();
   const questionTable = await queryInterface.describeTable('questions');

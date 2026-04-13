@@ -15,7 +15,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: true,
       },
-      type: enumField(DataTypes, ['pdf', 'image', 'video_link', 'document'], {
+      type: enumField(sequelize, DataTypes, ['pdf', 'image', 'video_link', 'document'], {
         allowNull: false,
       }),
       filePath: {

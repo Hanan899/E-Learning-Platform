@@ -3,4 +3,6 @@ node_modules
 coverage
 uploads/*
 !uploads/.gitkeep
+data/*.sqlite
+.tmp/
 .DS_Store

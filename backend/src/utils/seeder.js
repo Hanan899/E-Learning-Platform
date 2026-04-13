@@ -1,4 +1,6 @@
 const bcrypt = require('bcryptjs');
+const { v4: uuidv4 } = require('uuid');
+const { connectDatabase } = require('../config/database');
 const {
   sequelize,
   User,
@@ -1674,8 +1676,10 @@ const createSubmissions = async (courseContexts, enrollments) => {
         const gradedAt = isGraded
           ? randDate(submittedAt, latestGradeTimestamp)
           : null;
+        const submissionId = uuidv4();
 
         submissionRows.push({
+          id: submissionId,
           content: buildSubmissionText(courseContext),
           filePath: null,
           score,
@@ -1693,6 +1697,7 @@ const createSubmissions = async (courseContexts, enrollments) => {
           studentId: enrollment.studentId,
           submittedAt,
           gradedAt,
+          submissionId,
           score,
           status: isGraded ? 'graded' : 'submitted',
         });
@@ -1700,13 +1705,12 @@ const createSubmissions = async (courseContexts, enrollments) => {
     }
   }
 
-  let createdSubmissions = [];
   if (submissionRows.length > 0) {
-    createdSubmissions = await Submission.bulkCreate(submissionRows, { validate: true, returning: true });
+    await Submission.bulkCreate(submissionRows, { validate: true });
   }
 
   submissionEvents.forEach((event, index) => {
-    event.submission = createdSubmissions[index];
+    event.submission = { id: submissionRows[index].id };
   });
 
   return submissionEvents;
@@ -1781,8 +1785,10 @@ const createQuizAttempts = async (courseContexts, enrollments) => {
     const performanceTier = determineQuizPerformanceTier(enrollment.studentId);
     const result = buildQuizAnswers(courseContext.questions, performanceTier);
     const completedAt = randDate(new Date(enrollment.enrolledAt), now);
+    const attemptId = uuidv4();
 
     attemptRows.push({
+      id: attemptId,
       studentId: enrollment.studentId,
       quizId: courseContext.quiz.id,
       answers: result.answers,
@@ -1795,17 +1801,17 @@ const createQuizAttempts = async (courseContexts, enrollments) => {
       quiz: courseContext.quiz,
       studentId: enrollment.studentId,
       completedAt,
+      attemptId,
       score: result.score,
     });
   }
 
-  let createdAttempts = [];
   if (attemptRows.length > 0) {
-    createdAttempts = await QuizAttempt.bulkCreate(attemptRows, { validate: true, returning: true });
+    await QuizAttempt.bulkCreate(attemptRows, { validate: true });
   }
 
   attemptEvents.forEach((event, index) => {
-    event.attempt = createdAttempts[index];
+    event.attempt = { id: attemptRows[index].id };
   });
 
   return attemptEvents;
@@ -1944,6 +1950,7 @@ const seed = async () => {
   console.log('🌱 Starting seeder...');
 
   sequelize.options.logging = false;
+  await connectDatabase(sequelize);
   await sequelize.sync({ force: false });
   await clearSeedData();
 

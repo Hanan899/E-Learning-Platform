@@ -1,11 +1,11 @@
 # E-Learning Platform
 
-School-focused full-stack learning platform built with React, Express, PostgreSQL, Sequelize, JWT, Tailwind CSS, and Multer.
+School-focused full-stack learning platform built with React, Express, SQLite, Sequelize, JWT, Tailwind CSS, and Multer.
 
 ## Tech Stack
 
 - Frontend: React, Vite, Tailwind CSS, React Router, React Query, Axios
-- Backend: Node.js, Express, PostgreSQL, Sequelize, JWT, Multer, bcryptjs
+- Backend: Node.js, Express, SQLite, Sequelize, JWT, Multer, bcryptjs
 - Testing: Vitest, React Testing Library, Jest, Supertest
 
 ## Project Structure
@@ -33,40 +33,61 @@ E-Learning Platform/
    `cd backend`
    `npm install`
 
-3. Configure backend environment in [`backend/.env`](/Users/hanan/Documents/E-Learning%20Platform/backend/.env):
+3. Configure backend environment in `backend/.env`:
 
 ```env
+# App
 PORT=5001
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=elearning_db
-DB_USER=postgres
-DB_PASSWORD=yourpassword
-JWT_SECRET=your_super_secret_jwt_key_change_in_production
-JWT_EXPIRES_IN=7d
-UPLOAD_DIR=uploads
 NODE_ENV=development
 FRONTEND_ORIGIN=http://localhost:5173
+UPLOAD_DIR=uploads
+
+# Auth
+JWT_SECRET=replace_this_with_a_long_random_secret
+JWT_EXPIRES_IN=7d
+
+# Primary runtime database
+DB_DIALECT=sqlite
+SQLITE_STORAGE=./data/elearning.sqlite
+
+# Optional runtime Postgres settings
+# Only used if DB_DIALECT=postgres
+# DB_HOST=localhost
+# DB_PORT=5432
+# DB_NAME=elearning_db
+# DB_USER=postgres
+# DB_PASSWORD=yourpassword
+
+# One-time source database for:
+# npm run db:migrate:postgres-to-sqlite
+SOURCE_PG_HOST=localhost
+SOURCE_PG_PORT=5432
+SOURCE_PG_NAME=elearning_db
+SOURCE_PG_USER=postgres
+SOURCE_PG_PASSWORD=yourpassword
 ```
 
-4. Sync and seed the database:
+4. Sync and seed the SQLite database:
    `npm run db:sync`
    `npm run seed`
 
-5. Start the backend:
+5. If you need to import existing PostgreSQL data into SQLite:
+   `npm run db:migrate:postgres-to-sqlite`
+
+6. Start the backend:
    `npm run dev`
 
-6. In a new terminal, install frontend dependencies:
+7. In a new terminal, install frontend dependencies:
    `cd ../frontend`
    `npm install`
 
-7. Configure frontend environment in [`frontend/.env`](/Users/hanan/Documents/E-Learning%20Platform/frontend/.env):
+8. Configure frontend environment in `frontend/.env`:
 
 ```env
 VITE_API_URL=http://localhost:5001/api
 ```
 
-8. Start the frontend:
+9. Start the frontend:
    `npm run dev`
 
 ## Test Commands
@@ -99,6 +120,7 @@ VITE_API_URL=http://localhost:5001/api
 
 ## Notes
 
+- Runtime data is stored in `backend/data/elearning.sqlite`.
 - Uploaded files are served from `/uploads`.
 - Auth routes and API routes are rate-limited in development and production.
 - The frontend uses polling for notifications every 30 seconds.
