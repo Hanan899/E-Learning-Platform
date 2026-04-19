@@ -68,7 +68,12 @@ export function AuthProvider({ children }) {
 
   const register = async (payload) => {
     const response = await axiosInstance.post('/auth/register', payload);
-    return response.data.data.user;
+    const nextToken = response.data.data.token;
+    const nextUser = response.data.data.user;
+
+    persistSession(nextToken, nextUser, payload.rememberMe ?? true);
+
+    return nextUser;
   };
 
   useEffect(() => {

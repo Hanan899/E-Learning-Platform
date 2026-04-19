@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { HiOutlineArrowTopRightOnSquare, HiOutlineXMark } from 'react-icons/hi2';
 import { getInitials } from '../../utils/formatters';
+import { resolveAssetUrl } from '../../utils/api';
 import Spinner from '../ui/Spinner';
 
 function GradingDrawer({ isOpen, submission, isSubmitting, onClose, onSubmit }) {
@@ -88,7 +89,7 @@ function GradingDrawer({ isOpen, submission, isSubmitting, onClose, onSubmit }) 
                   </h3>
                   {submission.fileUrl ? (
                     <a
-                      href={`http://localhost:5001${submission.fileUrl}`}
+                      href={resolveAssetUrl(submission.fileUrl)}
                       target="_blank"
                       rel="noreferrer"
                       className="inline-flex items-center gap-2 text-sm font-medium text-primary"

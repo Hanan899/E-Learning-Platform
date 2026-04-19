@@ -43,7 +43,11 @@ router.put(
 
 router.delete(
   '/users/:id',
-  [param('id').isUUID().withMessage('User id must be a valid UUID'), validateRequest],
+  [
+    param('id').isUUID().withMessage('User id must be a valid UUID'),
+    body('confirm').custom((value) => value === true).withMessage('confirm must be true'),
+    validateRequest,
+  ],
   adminController.deleteUser
 );
 

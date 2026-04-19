@@ -29,7 +29,7 @@ function LoginPage() {
   } = useForm({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: 'teacher@school.com',
+      email: 'james.wilson@eduflow.com',
       password: 'Teacher123!',
       rememberMe: true,
     },

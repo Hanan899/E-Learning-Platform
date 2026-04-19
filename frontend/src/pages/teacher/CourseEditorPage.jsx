@@ -6,6 +6,7 @@ import {
   HiChevronRight,
   HiMiniPlus,
   HiOutlineEye,
+  HiOutlinePhoto,
   HiOutlineQuestionMarkCircle,
   HiOutlineSquares2X2,
 } from 'react-icons/hi2';
@@ -13,6 +14,9 @@ import { Link, useParams } from 'react-router-dom';
 import axiosInstance from '../../api/axios';
 import LessonEditor from '../../components/courses/LessonEditor';
 import AppLayout from '../../components/layout/AppLayout';
+import { apiOrigin } from '../../utils/api';
+
+const courseCategories = ['Math', 'Science', 'History', 'Language Arts', 'Technology'];
 
 const fetchCourse = async (id) => {
   const response = await axiosInstance.get(`/courses/${id}`);
@@ -26,6 +30,13 @@ function CourseEditorPage() {
   const [collapsedSections, setCollapsedSections] = useState({});
   const [newSectionTitle, setNewSectionTitle] = useState('');
   const [draggedSectionId, setDraggedSectionId] = useState(null);
+  const [courseDraft, setCourseDraft] = useState({
+    title: '',
+    description: '',
+    category: '',
+  });
+  const [thumbnailFile, setThumbnailFile] = useState(null);
+  const [thumbnailPreviewUrl, setThumbnailPreviewUrl] = useState('');
 
   const { data: course, isLoading } = useQuery({
     queryKey: ['teacher-course', id],
@@ -44,6 +55,31 @@ function CourseEditorPage() {
     }
   }, [course?.sections, selectedLessonId]);
 
+  useEffect(() => {
+    if (!course) {
+      return;
+    }
+
+    setCourseDraft({
+      title: course.title || '',
+      description: course.description || '',
+      category: course.category || '',
+    });
+    setThumbnailFile(null);
+    setThumbnailPreviewUrl(course.thumbnailUrl ? `${apiOrigin}${course.thumbnailUrl}` : '');
+  }, [course?.id, course?.title, course?.description, course?.category, course?.thumbnailUrl]);
+
+  useEffect(() => {
+    if (!thumbnailFile) {
+      return undefined;
+    }
+
+    const objectUrl = URL.createObjectURL(thumbnailFile);
+    setThumbnailPreviewUrl(objectUrl);
+
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [thumbnailFile]);
+
   const invalidateCourse = () => {
     queryClient.invalidateQueries({ queryKey: ['teacher-course', id] });
     queryClient.invalidateQueries({ queryKey: ['teacher-courses'] });
@@ -61,7 +97,15 @@ function CourseEditorPage() {
       const response = await axiosInstance.put(`/courses/${id}`, formData);
       return response.data.data.course;
     },
-    onSuccess: () => {
+    onSuccess: (updatedCourse) => {
+      queryClient.setQueryData(['teacher-course', id], updatedCourse);
+      setCourseDraft({
+        title: updatedCourse.title || '',
+        description: updatedCourse.description || '',
+        category: updatedCourse.category || '',
+      });
+      setThumbnailFile(null);
+      setThumbnailPreviewUrl(updatedCourse.thumbnailUrl ? `${apiOrigin}${updatedCourse.thumbnailUrl}` : '');
       toast.success('Course updated');
       invalidateCourse();
     },
@@ -193,6 +237,22 @@ function CourseEditorPage() {
     setDraggedSectionId(null);
   };
 
+  const totalLessons = course?.sections?.reduce((total, section) => total + section.lessons.length, 0) || 0;
+  const hasCourseDetailChanges =
+    courseDraft.title !== (course?.title || '') ||
+    courseDraft.description !== (course?.description || '') ||
+    courseDraft.category !== (course?.category || '') ||
+    Boolean(thumbnailFile);
+
+  const handleSaveCourseDetails = () => {
+    updateCourseMutation.mutate({
+      title: courseDraft.title,
+      description: courseDraft.description,
+      category: courseDraft.category,
+      thumbnail: thumbnailFile,
+    });
+  };
+
   if (isLoading || !course) {
     return (
       <AppLayout title="Course Editor">
@@ -203,44 +263,241 @@ function CourseEditorPage() {
 
   return (
     <AppLayout title="Course Editor">
-      <div className="mb-6 flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm xl:flex-row xl:items-center xl:justify-between">
-        <div className="flex-1">
-          <p className="text-sm uppercase tracking-[0.25em] text-primary">Teacher workspace</p>
-          <input
-            className="mt-2 w-full border-none bg-transparent p-0 font-heading text-3xl font-bold outline-none"
-            value={course.title}
-            onChange={(event) => updateCourseMutation.mutate({ title: event.target.value })}
-          />
-        </div>
+      <section className="mb-6 grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+        <article className="card p-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <p className="text-sm uppercase tracking-[0.25em] text-primary">Teacher workspace</p>
+              <h2 className="mt-2 text-2xl font-bold text-slate-950">Course Details</h2>
+              <p className="mt-1 text-sm text-slate-500">
+                Update the core information students see before they open the course.
+              </p>
+            </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <label className="inline-flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700">
-            <span>{course.isPublished ? 'Published' : 'Draft'}</span>
-            <button
-              type="button"
-              className={`relative h-7 w-12 rounded-full transition ${
-                course.isPublished ? 'bg-accent' : 'bg-slate-300'
-              }`}
-              onClick={() => togglePublishMutation.mutate()}
-            >
-              <span
-                className={`absolute top-1 h-5 w-5 rounded-full bg-white transition ${
-                  course.isPublished ? 'left-6' : 'left-1'
+            <label className="inline-flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700">
+              <span>{course.isPublished ? 'Published' : 'Draft'}</span>
+              <button
+                type="button"
+                className={`relative h-7 w-12 rounded-full transition ${
+                  course.isPublished ? 'bg-accent' : 'bg-slate-300'
                 }`}
-              />
-            </button>
-          </label>
+                onClick={() => togglePublishMutation.mutate()}
+              >
+                <span
+                  className={`absolute top-1 h-5 w-5 rounded-full bg-white transition ${
+                    course.isPublished ? 'left-6' : 'left-1'
+                  }`}
+                />
+              </button>
+            </label>
+          </div>
 
-          <button
-            type="button"
-            className="btn-secondary"
-            onClick={() => window.open(`/student/courses/${id}`, '_blank')}
-          >
-            <HiOutlineEye className="mr-2 text-lg" />
-            Preview
-          </button>
-        </div>
-      </div>
+          <div className="mt-6 grid gap-5">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="course-editor-title">
+                Course title
+              </label>
+              <input
+                id="course-editor-title"
+                className="input"
+                value={courseDraft.title}
+                onChange={(event) =>
+                  setCourseDraft((current) => ({
+                    ...current,
+                    title: event.target.value,
+                  }))
+                }
+              />
+            </div>
+
+            <div className="grid gap-5 lg:grid-cols-[220px_1fr]">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="course-editor-category">
+                  Category
+                </label>
+                <select
+                  id="course-editor-category"
+                  className="input"
+                  value={courseDraft.category}
+                  onChange={(event) =>
+                    setCourseDraft((current) => ({
+                      ...current,
+                      category: event.target.value,
+                    }))
+                  }
+                >
+                  <option value="">Select category</option>
+                  {courseCategories.map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">Thumbnail</label>
+                <label className="flex min-h-[132px] cursor-pointer items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 px-5 py-4 text-center text-sm text-slate-500 transition hover:border-primary/40 hover:bg-primary/5">
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept=".jpg,.jpeg,.png"
+                    onChange={(event) => setThumbnailFile(event.target.files?.[0] || null)}
+                  />
+                  {thumbnailPreviewUrl ? (
+                    <img src={thumbnailPreviewUrl} alt="Course thumbnail preview" className="h-24 w-full rounded-2xl object-cover" />
+                  ) : (
+                    <div>
+                      <p className="font-medium text-slate-700">Upload course cover</p>
+                      <p className="mt-1 text-sm text-slate-500">PNG or JPG recommended</p>
+                    </div>
+                  )}
+                </label>
+              </div>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="course-editor-description">
+                Description
+              </label>
+              <textarea
+                id="course-editor-description"
+                className="input min-h-[150px] resize-none"
+                value={courseDraft.description}
+                onChange={(event) =>
+                  setCourseDraft((current) => ({
+                    ...current,
+                    description: event.target.value,
+                  }))
+                }
+                placeholder="Write what students will learn, what the course covers, and how the lessons flow."
+              />
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-4">
+              <div className="flex flex-wrap gap-2 text-sm text-slate-500">
+                <span>{course.sections.length} sections</span>
+                <span>{totalLessons} lessons</span>
+                <span>{(course.quizzes || []).length} quizzes</span>
+              </div>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={handleSaveCourseDetails}
+                disabled={!hasCourseDetailChanges || updateCourseMutation.isPending}
+              >
+                {updateCourseMutation.isPending ? 'Saving...' : 'Save details'}
+              </button>
+            </div>
+          </div>
+        </article>
+
+        <article className="card overflow-hidden p-0">
+          <div className="border-b border-slate-100 bg-gradient-to-r from-slate-950 via-slate-900 to-primary px-6 py-6 text-white">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/65">
+                  Student Preview
+                </p>
+                <h2 className="mt-2 text-2xl font-bold text-white">Course Preview</h2>
+                <p className="mt-1 text-sm text-white/70">
+                  A live snapshot of how this course is presented before students open it.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-white px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100"
+                onClick={() => window.open(`/student/courses/${id}`, '_blank')}
+              >
+                <HiOutlineEye className="mr-2 text-lg" />
+                Open full preview
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-5 p-6">
+            <div className="overflow-hidden rounded-[2rem] bg-slate-950 text-white shadow-gentle">
+              {thumbnailPreviewUrl ? (
+                <img src={thumbnailPreviewUrl} alt="Course cover" className="h-52 w-full object-cover" />
+              ) : (
+                <div className="flex h-52 items-center justify-center bg-gradient-to-br from-slate-900 via-primary/60 to-slate-950">
+                  <div className="rounded-3xl bg-white/10 p-4 text-white/90">
+                    <HiOutlinePhoto className="text-4xl" />
+                  </div>
+                </div>
+              )}
+
+              <div className="p-6">
+                <span className="rounded-full bg-white/10 px-3 py-1 text-sm text-slate-200">
+                  {courseDraft.category || 'General'}
+                </span>
+                <h3 className="mt-4 text-3xl font-extrabold text-white">
+                  {courseDraft.title || 'Untitled course'}
+                </h3>
+                <p className="mt-3 text-slate-300">
+                  Teacher: {course.teacher?.firstName} {course.teacher?.lastName}
+                </p>
+                <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300">
+                  {courseDraft.description || 'Your course description preview will appear here once you add one.'}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="rounded-3xl bg-slate-50 p-4">
+                <p className="text-sm text-slate-500">Sections</p>
+                <p className="mt-2 text-3xl font-bold text-slate-950">{course.sections.length}</p>
+              </div>
+              <div className="rounded-3xl bg-slate-50 p-4">
+                <p className="text-sm text-slate-500">Lessons</p>
+                <p className="mt-2 text-3xl font-bold text-slate-950">{totalLessons}</p>
+              </div>
+              <div className="rounded-3xl bg-slate-50 p-4">
+                <p className="text-sm text-slate-500">Quizzes</p>
+                <p className="mt-2 text-3xl font-bold text-slate-950">{(course.quizzes || []).length}</p>
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-slate-100 bg-slate-50/80 p-5">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-lg font-bold text-slate-950">Outline Preview</h3>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Students will browse sections and lessons in this order.
+                  </p>
+                </div>
+                <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600 shadow-sm">
+                  {course.isPublished ? 'Published' : 'Draft'}
+                </span>
+              </div>
+
+              <div className="mt-4 space-y-3">
+                {course.sections.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-5 text-sm text-slate-500">
+                    Add sections and lessons to see the course outline preview.
+                  </div>
+                ) : (
+                  course.sections.slice(0, 3).map((section) => (
+                    <div key={section.id} className="rounded-2xl border border-slate-200 bg-white p-4">
+                      <p className="font-semibold text-slate-900">{section.title}</p>
+                      <p className="mt-1 text-sm text-slate-500">
+                        {section.lessons.length} lesson{section.lessons.length === 1 ? '' : 's'}
+                      </p>
+                      <div className="mt-3 space-y-2">
+                        {section.lessons.slice(0, 2).map((lesson) => (
+                          <div key={lesson.id} className="rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-600">
+                            Preview lesson: {lesson.title}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        </article>
+      </section>
 
       <div className="grid gap-6 xl:grid-cols-[340px_1fr]">
         <aside className="card p-4" data-testid="course-editor-sidebar">
