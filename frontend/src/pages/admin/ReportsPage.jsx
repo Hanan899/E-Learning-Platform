@@ -1,12 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import {
-  Bar,
-  BarChart,
-  Cell,
   Line,
   LineChart,
-  Pie,
-  PieChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -44,12 +39,37 @@ const cardConfig = [
   { key: 'activeThisWeek', label: 'Active This Week', icon: HiOutlineSparkles, tone: 'bg-violet-100 text-violet-700' },
 ];
 
-const scoreColors = {
-  A: '#10b981',
-  B: '#14b8a6',
-  C: '#3b82f6',
-  D: '#f59e0b',
-  F: '#ef4444',
+const scoreBandConfig = {
+  A: {
+    label: 'Excellent',
+    range: '90-100%',
+    detail: 'High mastery',
+    color: '#10b981',
+  },
+  B: {
+    label: 'Strong',
+    range: '80-89%',
+    detail: 'Above target',
+    color: '#14b8a6',
+  },
+  C: {
+    label: 'Satisfactory',
+    range: '70-79%',
+    detail: 'On track',
+    color: '#3b82f6',
+  },
+  D: {
+    label: 'Borderline',
+    range: '60-69%',
+    detail: 'Needs reinforcement',
+    color: '#f59e0b',
+  },
+  F: {
+    label: 'Needs Support',
+    range: 'Below 60%',
+    detail: 'Intervention needed',
+    color: '#ef4444',
+  },
 };
 
 const enrollmentBarColor = (count) => {
@@ -75,6 +95,30 @@ function ReportsPage() {
   const data = overviewQuery.data;
   const attentionItems = data?.coursesNeedingAttention || [];
   const topStudents = data?.topStudents || [];
+  const enrollmentChartData = [...(data?.enrollmentByCourse || [])]
+    .sort((first, second) => second.enrollmentCount - first.enrollmentCount)
+    .slice(0, 8)
+    .map((entry) => ({
+      ...entry,
+      fill: enrollmentBarColor(entry.enrollmentCount),
+    }));
+  const topEnrollmentCount = enrollmentChartData[0]?.enrollmentCount || 0;
+  const scoreBreakdown = Object.keys(scoreBandConfig).map((grade) => {
+    const source = (data?.scoreDistribution || []).find((entry) => entry.grade === grade);
+    const config = scoreBandConfig[grade];
+
+    return {
+      grade,
+      count: source?.count ?? 0,
+      ...config,
+    };
+  });
+  const totalEvaluated = scoreBreakdown.reduce((total, entry) => total + entry.count, 0);
+  const passingCount = scoreBreakdown
+    .filter((entry) => entry.grade !== 'F')
+    .reduce((total, entry) => total + entry.count, 0);
+  const passRate = totalEvaluated ? Math.round((passingCount / totalEvaluated) * 100) : 0;
+  const leadingScoreBand = [...scoreBreakdown].sort((first, second) => second.count - first.count)[0];
 
   return (
     <AppLayout title="Reports">
@@ -112,49 +156,190 @@ function ReportsPage() {
           </section>
 
           <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-            <article className="card p-5">
-              <h2 className="text-xl font-bold text-slate-950">Enrollment by Course</h2>
-              <div className="mt-5 h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={data.enrollmentByCourse} layout="vertical" margin={{ left: 20, right: 12 }}>
-                    <XAxis type="number" hide />
-                    <YAxis type="category" dataKey="title" width={140} tick={{ fill: '#475569', fontSize: 12 }} />
-                    <Tooltip />
-                    <Bar dataKey="enrollmentCount" radius={[0, 12, 12, 0]}>
-                      {data.enrollmentByCourse.map((entry) => (
-                        <Cell key={entry.courseId} fill={enrollmentBarColor(entry.enrollmentCount)} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+            <article className="card overflow-hidden p-0">
+              <div className="border-b border-slate-100 bg-gradient-to-r from-slate-950 via-slate-900 to-primary px-5 py-5 text-white">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/70">
+                      Demand Snapshot
+                    </p>
+                    <h2 className="mt-2 text-xl font-bold text-white">Enrollment by Course</h2>
+                    <p className="mt-1 text-sm text-white/70">
+                      Highest-demand courses based on current student enrollments.
+                    </p>
+                  </div>
+                  <div className="rounded-2xl bg-white/10 px-4 py-3 backdrop-blur">
+                    <p className="text-xs uppercase tracking-[0.18em] text-white/60">Most Enrolled</p>
+                    <p className="mt-1 text-sm font-semibold text-white">
+                      {enrollmentChartData[0]
+                        ? `${enrollmentChartData[0].title} • ${enrollmentChartData[0].enrollmentCount} students`
+                        : 'No course data yet'}
+                    </p>
+                  </div>
+                </div>
               </div>
+
+              {enrollmentChartData.length === 0 ? (
+                <div className="p-5">
+                  <EmptyState
+                    icon={HiOutlineBookOpen}
+                    title="No enrollments yet"
+                    description="Course demand will appear here once students start enrolling."
+                  />
+                </div>
+              ) : (
+                <div className="p-5">
+                  <div className="grid gap-4">
+                    {enrollmentChartData.map((entry, index) => {
+                      const share = topEnrollmentCount
+                        ? Math.max(10, Math.round((entry.enrollmentCount / topEnrollmentCount) * 100))
+                        : 0;
+
+                      return (
+                        <article
+                          key={entry.courseId}
+                          className="rounded-3xl border border-slate-100 bg-slate-50/85 px-4 py-4"
+                        >
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-3">
+                                <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-white text-sm font-bold text-slate-700 shadow-sm">
+                                  #{index + 1}
+                                </span>
+                                <div className="min-w-0">
+                                  <p className="truncate text-base font-semibold text-slate-950">
+                                    {entry.title}
+                                  </p>
+                                  <p className="mt-1 text-sm text-slate-500">
+                                    {entry.enrollmentCount} enrolled students
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 self-start sm:self-auto">
+                              <span
+                                className="rounded-full px-3 py-1 text-xs font-semibold"
+                                style={{ backgroundColor: `${entry.fill}1A`, color: entry.fill }}
+                              >
+                                {share}% of top course
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="mt-4 h-3 rounded-full bg-white">
+                            <div
+                              className="h-3 rounded-full transition-all"
+                              style={{
+                                width: `${share}%`,
+                                background: `linear-gradient(90deg, ${entry.fill}, ${entry.fill}CC)`,
+                              }}
+                            />
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+
+                  <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                    <div className="rounded-2xl border border-slate-100 bg-white px-4 py-3">
+                      <p className="text-sm text-slate-500">Courses shown</p>
+                      <p className="mt-1 text-2xl font-bold text-slate-950">{enrollmentChartData.length}</p>
+                    </div>
+                    <div className="rounded-2xl border border-slate-100 bg-white px-4 py-3">
+                      <p className="text-sm text-slate-500">Top course demand</p>
+                      <p className="mt-1 text-2xl font-bold text-slate-950">{topEnrollmentCount}</p>
+                    </div>
+                    <div className="rounded-2xl border border-slate-100 bg-white px-4 py-3">
+                      <p className="text-sm text-slate-500">Total in top list</p>
+                      <p className="mt-1 text-2xl font-bold text-slate-950">
+                        {enrollmentChartData.reduce((total, entry) => total + entry.enrollmentCount, 0)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </article>
 
-            <article className="card p-5">
-              <h2 className="text-xl font-bold text-slate-950">Score Distribution</h2>
-              <div className="mt-5 h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={data.scoreDistribution} dataKey="count" nameKey="grade" innerRadius={70} outerRadius={105}>
-                      {data.scoreDistribution.map((entry) => (
-                        <Cell key={entry.grade} fill={scoreColors[entry.grade]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
+            <article className="card overflow-hidden p-0">
+              <div className="border-b border-slate-100 bg-gradient-to-br from-emerald-50 via-white to-rose-50 px-5 py-5">
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                  Performance Bands
+                </p>
+                <h2 className="mt-2 text-xl font-bold text-slate-950">Score Distribution</h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  Scores grouped by percentage range so the chart reads clearly for admins.
+                </p>
               </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {data.scoreDistribution.map((entry) => (
-                  <div key={entry.grade} className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3 text-sm">
-                    <span className="inline-flex items-center gap-2 text-slate-600">
-                      <span className="h-3 w-3 rounded-full" style={{ backgroundColor: scoreColors[entry.grade] }} />
-                      {entry.grade}
-                    </span>
-                    <span className="font-semibold text-slate-950">{entry.count}</span>
+
+              {totalEvaluated === 0 ? (
+                <div className="p-5">
+                  <EmptyState
+                    icon={HiOutlineChartBar}
+                    title="No graded results yet"
+                    description="Once quizzes and assignments are scored, performance bands will show here."
+                  />
+                </div>
+              ) : (
+                <div className="p-5">
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <div className="rounded-3xl bg-slate-950 px-4 py-4 text-white">
+                      <p className="text-sm text-slate-300">Pass rate</p>
+                      <p className="mt-2 text-3xl font-bold">{passRate}%</p>
+                    </div>
+                    <div className="rounded-3xl bg-emerald-50 px-4 py-4">
+                      <p className="text-sm text-emerald-700">Evaluated work</p>
+                      <p className="mt-2 text-3xl font-bold text-emerald-950">{totalEvaluated}</p>
+                    </div>
+                    <div className="rounded-3xl bg-amber-50 px-4 py-4">
+                      <p className="text-sm text-amber-700">Largest group</p>
+                      <p className="mt-2 text-lg font-bold text-amber-950">{leadingScoreBand.label}</p>
+                      <p className="mt-1 text-sm text-amber-800">{leadingScoreBand.range}</p>
+                    </div>
                   </div>
-                ))}
-              </div>
+
+                  <div className="mt-5 grid gap-3">
+                    {scoreBreakdown.map((entry) => {
+                      const percentage = totalEvaluated ? Math.round((entry.count / totalEvaluated) * 100) : 0;
+
+                      return (
+                        <div
+                          key={entry.grade}
+                          className="rounded-3xl border border-slate-100 bg-slate-50/80 px-4 py-4"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900">
+                                <span
+                                  className="h-3.5 w-3.5 rounded-full"
+                                  style={{ backgroundColor: entry.color }}
+                                />
+                                {entry.label}
+                              </span>
+                              <p className="mt-1 text-sm text-slate-500">
+                                {entry.range} • {entry.detail}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-lg font-bold text-slate-950">{entry.count}</p>
+                              <p className="text-sm text-slate-500">{percentage}%</p>
+                            </div>
+                          </div>
+                          <div className="mt-3 h-2.5 rounded-full bg-white">
+                            <div
+                              className="h-2.5 rounded-full"
+                              style={{
+                                width: `${percentage}%`,
+                                backgroundColor: entry.color,
+                              }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </article>
           </section>
 

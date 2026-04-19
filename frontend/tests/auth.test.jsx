@@ -129,4 +129,55 @@ describe('Authentication UI', () => {
     await userEvent.type(passwordInput, 'Password1!');
     expect(screen.getByTestId('password-strength')).toHaveTextContent('Strong');
   });
+
+  test('register form submits selected teacher role and redirects to teacher dashboard', async () => {
+    const registerMock = vi.fn().mockResolvedValue({
+      id: 'teacher-1',
+      role: 'teacher',
+    });
+
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <MemoryRouter initialEntries={['/register']}>
+          <AuthContext.Provider
+            value={{
+              user: null,
+              token: null,
+              isAuthenticated: false,
+              isLoading: false,
+              login: vi.fn(),
+              register: registerMock,
+              logout: vi.fn(),
+              hasRole: vi.fn(() => false),
+            }}
+          >
+            <Routes>
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path="/teacher/dashboard" element={<div>Teacher dashboard</div>} />
+            </Routes>
+          </AuthContext.Provider>
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+
+    await userEvent.type(screen.getByLabelText(/first name/i), 'Taylor');
+    await userEvent.type(screen.getByLabelText(/last name/i), 'Instructor');
+    await userEvent.type(screen.getByLabelText(/email/i), 'taylor@school.com');
+    await userEvent.click(screen.getByRole('radio', { name: /teacher/i }));
+    await userEvent.type(screen.getByLabelText(/^password$/i), 'Teacher1234');
+    await userEvent.type(screen.getByLabelText(/confirm password/i), 'Teacher1234');
+    await userEvent.click(screen.getByRole('button', { name: /create account/i }));
+
+    await waitFor(() => {
+      expect(registerMock).toHaveBeenCalledWith({
+        firstName: 'Taylor',
+        lastName: 'Instructor',
+        email: 'taylor@school.com',
+        role: 'teacher',
+        password: 'Teacher1234',
+      });
+    });
+
+    expect(await screen.findByText('Teacher dashboard')).toBeInTheDocument();
+  });
 });

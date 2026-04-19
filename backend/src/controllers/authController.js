@@ -1,7 +1,7 @@
 const { Op, fn, col, where } = require('sequelize');
 const { User } = require('../models');
 const { success, error } = require('../utils/responseHelper');
-const { createNotification } = require('../utils/notificationService');
+const { createNotification, createNotifications } = require('../utils/notificationService');
 const {
   normalizeEmail,
   passwordRegex,
@@ -20,6 +20,7 @@ const register = async (req, res, next) => {
   try {
     const { firstName, lastName, password } = req.body;
     const email = normalizeEmail(req.body.email);
+    const requestedRole = req.body.role === 'teacher' ? 'teacher' : 'student';
 
     if (!passwordRegex.test(password)) {
       return error(
@@ -40,14 +41,36 @@ const register = async (req, res, next) => {
       lastName: lastName.trim(),
       email,
       password,
-      role: 'student',
+      role: requestedRole,
     });
 
     await createNotification(user.id, {
       title: 'Welcome to EduFlow',
-      message: 'Your student account is ready. Start exploring available courses.',
+      message:
+        requestedRole === 'teacher'
+          ? 'Your teacher account is ready. An admin has been notified to review your registration.'
+          : 'Your student account is ready. Start exploring available courses.',
       type: 'announcement',
     });
+
+    if (requestedRole === 'teacher') {
+      const admins = await User.findAll({
+        where: {
+          role: 'admin',
+          isActive: true,
+        },
+        attributes: ['id'],
+      });
+
+      await createNotifications(
+        admins.map((adminUser) => adminUser.id),
+        {
+          title: 'New teacher registration',
+          message: `${user.firstName} ${user.lastName} (${user.email}) registered as a teacher. Please verify this account from User Management.`,
+          type: 'announcement',
+        }
+      );
+    }
 
     return success(
       res,

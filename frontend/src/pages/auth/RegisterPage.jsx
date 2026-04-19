@@ -6,13 +6,16 @@ import { HiOutlineAcademicCap, HiOutlineEye, HiOutlineEyeSlash } from 'react-ico
 import { Link, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { useAuth } from '../../hooks/useAuth';
-import { getPasswordStrength } from '../../utils/auth';
+import { getDefaultRouteForRole, getPasswordStrength } from '../../utils/auth';
 
 const registerSchema = z
   .object({
     firstName: z.string().trim().min(1, 'First name is required'),
     lastName: z.string().trim().min(1, 'Last name is required'),
     email: z.string().email('Enter a valid email address'),
+    role: z.enum(['student', 'teacher'], {
+      errorMap: () => ({ message: 'Select whether you are a student or teacher' }),
+    }),
     password: z
       .string()
       .min(8, 'Password must be at least 8 characters')
@@ -41,6 +44,7 @@ function RegisterPage() {
       firstName: '',
       lastName: '',
       email: '',
+      role: 'student',
       password: '',
       confirmPassword: '',
     },
@@ -53,16 +57,19 @@ function RegisterPage() {
 
   const onSubmit = async (values) => {
     try {
-      await registerAccount({
+      const nextUser = await registerAccount({
         firstName: values.firstName,
         lastName: values.lastName,
         email: values.email,
+        role: values.role,
         password: values.password,
       });
-      navigate('/login', {
-        replace: true,
-        state: { message: 'Account created! Please log in.' },
-      });
+      toast.success(
+        values.role === 'teacher'
+          ? 'Teacher account created. Admins have been notified to verify it.'
+          : 'Student account created successfully.'
+      );
+      navigate(getDefaultRouteForRole(nextUser.role), { replace: true });
     } catch (error) {
       toast.error(error.response?.data?.message || 'Unable to create account');
     }
@@ -77,7 +84,7 @@ function RegisterPage() {
           </div>
           <p className="mt-4 font-heading text-2xl font-bold">EduFlow</p>
           <p className="mt-2 text-sm text-slate-500">
-            Create your student account to get started with courses and quizzes.
+            Create your account, choose your role, and we will take you straight to the right workspace.
           </p>
         </div>
 
@@ -110,6 +117,31 @@ function RegisterPage() {
             </label>
             <input id="register-email" type="email" className="input" {...register('email')} />
             {errors.email ? <p className="mt-2 text-sm text-danger">{errors.email.message}</p> : null}
+          </div>
+
+          <div>
+            <span className="mb-2 block text-sm font-medium text-slate-700">I am joining as</span>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm text-slate-700 transition hover:border-primary/40 hover:bg-primary/5">
+                <input type="radio" value="student" className="mt-1 h-4 w-4 text-primary" {...register('role')} />
+                <span>
+                  <span className="block font-semibold text-slate-900">Student</span>
+                  <span className="mt-1 block text-slate-500">
+                    Join courses, submit assignments, and track progress.
+                  </span>
+                </span>
+              </label>
+              <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm text-slate-700 transition hover:border-primary/40 hover:bg-primary/5">
+                <input type="radio" value="teacher" className="mt-1 h-4 w-4 text-primary" {...register('role')} />
+                <span>
+                  <span className="block font-semibold text-slate-900">Teacher</span>
+                  <span className="mt-1 block text-slate-500">
+                    Build courses, manage lessons, and review student work.
+                  </span>
+                </span>
+              </label>
+            </div>
+            {errors.role ? <p className="mt-2 text-sm text-danger">{errors.role.message}</p> : null}
           </div>
 
           <div>

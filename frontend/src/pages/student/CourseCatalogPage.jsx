@@ -5,6 +5,7 @@ import { HiOutlineMagnifyingGlass } from 'react-icons/hi2';
 import { Link } from 'react-router-dom';
 import axiosInstance from '../../api/axios';
 import AppLayout from '../../components/layout/AppLayout';
+import { resolveAssetUrl } from '../../utils/api';
 
 const fetchCourses = async ({ queryKey }) => {
   const [, params] = queryKey;
@@ -17,7 +18,7 @@ function CourseCard({ course, onEnroll }) {
     <article className="card flex h-full flex-col overflow-hidden" data-testid="course-card">
       <div className="h-44 bg-gradient-to-br from-primary/20 via-slate-100 to-accent/20">
         {course.thumbnailUrl ? (
-          <img src={`http://localhost:5001${course.thumbnailUrl}`} alt={course.title} className="h-full w-full object-cover" />
+          <img src={resolveAssetUrl(course.thumbnailUrl)} alt={course.title} className="h-full w-full object-cover" />
         ) : (
           <div className="flex h-full items-center justify-center text-sm font-medium text-slate-500">
             Course cover

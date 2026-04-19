@@ -2,6 +2,11 @@
 
 School-focused full-stack learning platform built with React, Express, SQLite, Sequelize, JWT, Tailwind CSS, and Multer.
 
+## Documentation
+
+- [Architecture Guide](/Users/hanan/Documents/E-Learning Platform/ARCHITECTURE.md)
+- [Project Setup Guide](/Users/hanan/Documents/E-Learning Platform/PROJECT_SETUP.md)
+
 ## Tech Stack
 
 - Frontend: React, Vite, Tailwind CSS, React Router, React Query, Axios
@@ -137,10 +142,33 @@ If you ever need to import an existing PostgreSQL database into SQLite:
 
 Only available if you run `npm run seed`.
 
-- Admin: `admin@school.com` / `Admin123!`
-- Teacher: `teacher@school.com` / `Teacher123!`
-- Student 1: `student1@school.com` / `Student123!`
-- Student 2: `student2@school.com` / `Student123!`
+- Admin: `admin@eduflow.com` / `Admin123!`
+- Teacher: `james.wilson@eduflow.com` / `Teacher123!`
+- Student 1: `liam.harris@student.edu` / `Student123!`
+- Student 2: `olivia.jackson@student.edu` / `Student123!`
+
+## First Admin on Fresh Data
+
+If you start with an empty database and do not run the seed script, create the first admin like this:
+
+1. Register a normal account from the app with the email/password you want to keep as the main admin.
+2. Open `backend/data/elearning.sqlite` in SQLite.
+3. Run:
+
+```sql
+UPDATE users
+SET role = 'admin'
+WHERE email = 'owner@eduflow.com';
+```
+
+You can use credentials such as `owner@eduflow.com` / `Admin123!` when creating that first account, as long as the password meets the app rules.
+
+## Registration Roles
+
+- New users choose `Student` or `Teacher` during registration.
+- Students go straight to the student dashboard after account creation.
+- Teachers go straight to the teacher dashboard after account creation.
+- Every teacher signup also notifies admins so they can verify the account from the admin side.
 
 ## API Summary
 

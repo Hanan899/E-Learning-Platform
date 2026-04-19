@@ -20,7 +20,7 @@ function LoginPage() {
   } = useForm({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: 'teacher@school.com',
+      email: 'james.wilson@eduflow.com',
       password: 'Teacher123!',
     },
   });
@@ -102,9 +102,9 @@ function LoginPage() {
 
             <div className="mt-8 rounded-2xl bg-slate-50 p-5 text-sm text-slate-600">
               <p>Demo users:</p>
-              <p className="mt-2">admin@school.com / Admin123!</p>
-              <p>teacher@school.com / Teacher123!</p>
-              <p>student1@school.com / Student123!</p>
+              <p className="mt-2">admin@eduflow.com / Admin123!</p>
+              <p>james.wilson@eduflow.com / Teacher123!</p>
+              <p>liam.harris@student.edu / Student123!</p>
             </div>
           </div>
         </section>

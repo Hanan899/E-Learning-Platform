@@ -1,8 +1,11 @@
+import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 import { HiEllipsisHorizontal, HiOutlineMagnifyingGlass, HiOutlineUsers } from 'react-icons/hi2';
 import axiosInstance from '../../api/axios';
 import AppLayout from '../../components/layout/AppLayout';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import EmptyState from '../../components/ui/EmptyState';
 import ErrorAlert from '../../components/ui/ErrorAlert';
 import PageLoader from '../../components/ui/PageLoader';
@@ -13,6 +16,73 @@ const roleBadgeMap = {
   teacher: 'bg-sky-100 text-sky-700',
   student: 'bg-emerald-100 text-emerald-700',
 };
+
+const roleOptions = [
+  { value: 'admin', label: 'Admin' },
+  { value: 'teacher', label: 'Teacher' },
+  { value: 'student', label: 'Student' },
+];
+
+function UserRoleSelect({ value, onChange }) {
+  return (
+    <select
+      value={value}
+      onChange={onChange}
+      className="min-h-[42px] rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+    >
+      {roleOptions.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+function UserActionMenu({ user, onCopyEmail, onToggleStatus, onDelete }) {
+  return (
+    <Menu as="div" className="relative inline-block text-left">
+      <MenuButton
+        className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-700"
+        aria-label={`Open actions for ${user.firstName} ${user.lastName}`}
+      >
+        <HiEllipsisHorizontal className="text-xl" />
+      </MenuButton>
+      <MenuItems
+        anchor="bottom end"
+        className="z-20 mt-2 w-48 rounded-2xl border border-slate-200 bg-white p-2 shadow-lg focus:outline-none"
+      >
+        <MenuItem>
+          <button
+            type="button"
+            className="w-full rounded-xl px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
+            onClick={() => onCopyEmail(user.email)}
+          >
+            Copy email
+          </button>
+        </MenuItem>
+        <MenuItem>
+          <button
+            type="button"
+            className="w-full rounded-xl px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
+            onClick={() => onToggleStatus(user.id)}
+          >
+            {user.isActive ? 'Deactivate user' : 'Activate user'}
+          </button>
+        </MenuItem>
+        <MenuItem>
+          <button
+            type="button"
+            className="w-full rounded-xl px-3 py-2 text-left text-sm text-rose-600 hover:bg-rose-50"
+            onClick={() => onDelete(user)}
+          >
+            Delete permanently
+          </button>
+        </MenuItem>
+      </MenuItems>
+    </Menu>
+  );
+}
 
 const fetchUsers = async ({ queryKey }) => {
   const [, params] = queryKey;
@@ -29,6 +99,8 @@ function UsersPage() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [role, setRole] = useState('');
   const [page, setPage] = useState(1);
+  const [userToDelete, setUserToDelete] = useState(null);
+  const [isDeletingUser, setIsDeletingUser] = useState(false);
   const limit = 10;
 
   useEffect(() => {
@@ -54,13 +126,52 @@ function UsersPage() {
   };
 
   const handleRoleChange = async (userId, nextRole) => {
-    await axiosInstance.put(`/admin/users/${userId}/role`, { role: nextRole });
-    invalidateUsers();
+    try {
+      await axiosInstance.put(`/admin/users/${userId}/role`, { role: nextRole });
+      toast.success('User role updated');
+      invalidateUsers();
+    } catch (actionError) {
+      toast.error(actionError.response?.data?.message || 'Unable to update user role');
+    }
   };
 
   const handleToggleStatus = async (userId) => {
-    await axiosInstance.put(`/admin/users/${userId}/status`);
-    invalidateUsers();
+    try {
+      await axiosInstance.put(`/admin/users/${userId}/status`);
+      toast.success('User status updated');
+      invalidateUsers();
+    } catch (actionError) {
+      toast.error(actionError.response?.data?.message || 'Unable to update user status');
+    }
+  };
+
+  const handleCopyEmail = async (email) => {
+    try {
+      await navigator.clipboard.writeText(email);
+      toast.success('Email copied');
+    } catch (_error) {
+      toast.error('Unable to copy email');
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!userToDelete || isDeletingUser) {
+      return;
+    }
+
+    try {
+      setIsDeletingUser(true);
+      await axiosInstance.delete(`/admin/users/${userToDelete.id}`, {
+        data: { confirm: true },
+      });
+      toast.success('User deleted permanently');
+      setUserToDelete(null);
+      invalidateUsers();
+    } catch (actionError) {
+      toast.error(actionError.response?.data?.message || 'Unable to delete user');
+    } finally {
+      setIsDeletingUser(false);
+    }
   };
 
   return (
@@ -167,29 +278,17 @@ function UsersPage() {
                       </td>
                       <td className="py-4 text-slate-600">{formatDate(user.createdAt)}</td>
                       <td className="py-4">
-                        <div className="flex items-center justify-end gap-2">
-                          <select
+                        <div className="flex items-center justify-end gap-2 rounded-2xl bg-slate-50/80 px-2 py-2">
+                          <UserRoleSelect
                             value={user.role}
                             onChange={(event) => handleRoleChange(user.id, event.target.value)}
-                            className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                          >
-                            <option value="admin">Admin</option>
-                            <option value="teacher">Teacher</option>
-                            <option value="student">Student</option>
-                          </select>
-                          <button
-                            type="button"
-                            className="btn-secondary px-4"
-                            onClick={() => handleToggleStatus(user.id)}
-                          >
-                            {user.isActive ? 'Deactivate' : 'Activate'}
-                          </button>
-                          <button
-                            type="button"
-                            className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200"
-                          >
-                            <HiEllipsisHorizontal className="text-xl text-slate-500" />
-                          </button>
+                          />
+                          <UserActionMenu
+                            user={user}
+                            onCopyEmail={handleCopyEmail}
+                            onToggleStatus={handleToggleStatus}
+                            onDelete={setUserToDelete}
+                          />
                         </div>
                       </td>
                     </tr>
@@ -232,28 +331,18 @@ function UsersPage() {
                   </div>
 
                   <div className="mt-4 grid gap-3">
-                    <select
+                    <UserRoleSelect
                       value={user.role}
                       onChange={(event) => handleRoleChange(user.id, event.target.value)}
-                      className="input"
-                    >
-                      <option value="admin">Admin</option>
-                      <option value="teacher">Teacher</option>
-                      <option value="student">Student</option>
-                    </select>
-                    <button
-                      type="button"
-                      className="btn-secondary w-full"
-                      onClick={() => handleToggleStatus(user.id)}
-                    >
-                      {user.isActive ? 'Deactivate' : 'Activate'}
-                    </button>
-                    <button
-                      type="button"
-                      className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500"
-                    >
-                      <HiEllipsisHorizontal className="text-xl" />
-                    </button>
+                    />
+                    <div className="flex justify-end">
+                      <UserActionMenu
+                        user={user}
+                        onCopyEmail={handleCopyEmail}
+                        onToggleStatus={handleToggleStatus}
+                        onDelete={setUserToDelete}
+                      />
+                    </div>
                   </div>
                 </article>
               ))}
@@ -285,6 +374,25 @@ function UsersPage() {
           </>
         )}
       </section>
+
+      <ConfirmDialog
+        isOpen={Boolean(userToDelete)}
+        title="Delete user permanently"
+        message={
+          userToDelete
+            ? `Delete ${userToDelete.firstName} ${userToDelete.lastName} from the system? This permanently removes the account and related records, and cannot be undone.`
+            : ''
+        }
+        confirmLabel="Delete permanently"
+        isDanger
+        isPending={isDeletingUser}
+        onClose={() => {
+          if (!isDeletingUser) {
+            setUserToDelete(null);
+          }
+        }}
+        onConfirm={handleDeleteUser}
+      />
     </AppLayout>
   );
 }

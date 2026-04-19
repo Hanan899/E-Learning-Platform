@@ -9,6 +9,7 @@ import AppLayout from '../../components/layout/AppLayout';
 import EmptyState from '../../components/ui/EmptyState';
 import ErrorAlert from '../../components/ui/ErrorAlert';
 import PageLoader from '../../components/ui/PageLoader';
+import { resolveAssetUrl } from '../../utils/api';
 
 const fetchCourses = async () => {
   const response = await axiosInstance.get('/courses');
@@ -20,7 +21,7 @@ function CourseCard({ course }) {
     <article className="card overflow-hidden">
       <div className="h-48 bg-gradient-to-br from-primary/20 via-slate-100 to-accent/20">
         {course.thumbnailUrl ? (
-          <img src={`http://localhost:5001${course.thumbnailUrl}`} alt={course.title} className="h-full w-full object-cover" />
+          <img src={resolveAssetUrl(course.thumbnailUrl)} alt={course.title} className="h-full w-full object-cover" />
         ) : (
           <div className="flex h-full items-center justify-center text-sm font-medium text-slate-500">
             No thumbnail yet

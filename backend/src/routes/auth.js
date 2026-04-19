@@ -15,6 +15,10 @@ router.post(
     body('firstName').trim().notEmpty().withMessage('First name is required'),
     body('lastName').trim().notEmpty().withMessage('Last name is required'),
     body('email').trim().isEmail().withMessage('A valid email is required'),
+    body('role')
+      .optional()
+      .isIn(['student', 'teacher'])
+      .withMessage('Role must be student or teacher'),
     body('password')
       .matches(passwordRule)
       .withMessage(

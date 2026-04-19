@@ -5,6 +5,7 @@ const {
   Course,
   Enrollment,
   LessonProgress,
+  Material,
   Notification,
   Quiz,
   QuizAttempt,
@@ -18,6 +19,15 @@ const { buildCourseAnalytics, buildCourseGradebook } = require('./teacherControl
 
 const round = (value) => Number(Number(value || 0).toFixed(2));
 const getFullName = (user) => `${user?.firstName || ''} ${user?.lastName || ''}`.trim();
+const removeFiles = (filePaths = []) => {
+  const uniquePaths = [...new Set(filePaths.filter(Boolean))];
+
+  uniquePaths.forEach((filePath) => {
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+  });
+};
 
 const buildSearchWhere = (search) => {
   if (!search) {
@@ -582,13 +592,74 @@ const deleteUser = async (req, res, next) => {
     }
 
     if (user.id === req.user.id) {
-      return error(res, 'You cannot deactivate your own account', 400);
+      return error(res, 'You cannot delete your own account', 400);
     }
 
-    user.isActive = false;
-    await user.save();
+    if (req.body.confirm !== true) {
+      return error(res, 'Confirmation is required to delete this user', 400);
+    }
 
-    return success(res, { user: serializeUser(user) }, 'User deactivated successfully');
+    const teacherCourses = await Course.findAll({
+      where: { teacherId: user.id },
+      attributes: ['id', 'thumbnail'],
+    });
+    const courseIds = teacherCourses.map((course) => course.id);
+
+    const assignmentWhere = {
+      [Op.or]: [{ teacherId: user.id }, ...(courseIds.length ? [{ courseId: { [Op.in]: courseIds } }] : [])],
+    };
+    const assignments = await Assignment.findAll({
+      where: assignmentWhere,
+      attributes: ['id'],
+    });
+    const assignmentIds = assignments.map((assignment) => assignment.id);
+
+    const materialFiles = courseIds.length
+      ? await Material.findAll({
+          where: { courseId: { [Op.in]: courseIds } },
+          attributes: ['filePath'],
+        })
+      : [];
+
+    const submissionWhere = {
+      [Op.or]: [{ studentId: user.id }, ...(assignmentIds.length ? [{ assignmentId: { [Op.in]: assignmentIds } }] : [])],
+    };
+    const submissionFiles = await Submission.findAll({
+      where: submissionWhere,
+      attributes: ['filePath'],
+    });
+
+    await User.sequelize.transaction(async (transaction) => {
+      await Notification.destroy({ where: { userId: user.id }, transaction });
+      await LessonProgress.destroy({ where: { studentId: user.id }, transaction });
+      await QuizAttempt.destroy({ where: { studentId: user.id }, transaction });
+      await Enrollment.destroy({ where: { studentId: user.id }, transaction });
+      await Submission.destroy({ where: submissionWhere, transaction });
+
+      if (assignmentIds.length) {
+        await Assignment.destroy({
+          where: { id: { [Op.in]: assignmentIds } },
+          transaction,
+        });
+      }
+
+      if (courseIds.length) {
+        await Course.destroy({
+          where: { id: { [Op.in]: courseIds } },
+          transaction,
+        });
+      }
+
+      await user.destroy({ transaction });
+    });
+
+    removeFiles([
+      ...teacherCourses.map((course) => course.thumbnail),
+      ...materialFiles.map((material) => material.filePath),
+      ...submissionFiles.map((submission) => submission.filePath),
+    ]);
+
+    return success(res, null, 'User deleted successfully');
   } catch (err) {
     return next(err);
   }
