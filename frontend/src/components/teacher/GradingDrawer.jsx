@@ -1,26 +1,62 @@
-import { useState } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useEffect, useMemo } from 'react';
+import { useForm } from 'react-hook-form';
 import { HiOutlineArrowTopRightOnSquare, HiOutlineXMark } from 'react-icons/hi2';
+import { z } from 'zod';
 import { getInitials } from '../../utils/formatters';
 import { resolveAssetUrl } from '../../utils/api';
 import Spinner from '../ui/Spinner';
 
 function GradingDrawer({ isOpen, submission, isSubmitting, onClose, onSubmit }) {
-  const [score, setScore] = useState(
-    submission?.grade?.score !== null && submission?.grade?.score !== undefined
-      ? String(submission.grade.score)
-      : ''
+  const maxScore = Number(submission?.assignment?.maxScore || 0);
+  const gradingSchema = useMemo(
+    () =>
+      z.object({
+        score: z.coerce
+          .number({
+            required_error: 'Score is required',
+            invalid_type_error: 'Score must be a number',
+          })
+          .min(0, 'Score must be zero or higher')
+          .max(maxScore, `Score cannot exceed ${maxScore}`),
+        feedback: z.string().trim().optional(),
+      }),
+    [maxScore]
   );
-  const [feedback, setFeedback] = useState(submission?.grade?.feedback || '');
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(gradingSchema),
+    defaultValues: {
+      score:
+        submission?.grade?.score !== null && submission?.grade?.score !== undefined
+          ? String(submission.grade.score)
+          : '',
+      feedback: submission?.grade?.feedback || '',
+    },
+  });
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+  useEffect(() => {
+    reset({
+      score:
+        submission?.grade?.score !== null && submission?.grade?.score !== undefined
+          ? String(submission.grade.score)
+          : '',
+      feedback: submission?.grade?.feedback || '',
+    });
+  }, [reset, submission]);
+
+  const submitGrade = async (values) => {
     if (!submission) {
       return;
     }
 
     await onSubmit({
-      score: Number(score),
-      feedback,
+      score: values.score,
+      feedback: values.feedback || '',
     });
   };
 
@@ -28,7 +64,11 @@ function GradingDrawer({ isOpen, submission, isSubmitting, onClose, onSubmit }) 
     <>
       <div
         className={`fixed inset-0 z-40 bg-slate-950/35 transition ${isOpen ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
-        onClick={onClose}
+        onClick={() => {
+          if (!isSubmitting) {
+            onClose();
+          }
+        }}
       />
       <aside
         className={`fixed inset-y-0 right-0 z-50 flex w-full max-w-xl flex-col border-l border-slate-200 bg-white shadow-2xl transition-transform duration-300 ${
@@ -47,13 +87,14 @@ function GradingDrawer({ isOpen, submission, isSubmitting, onClose, onSubmit }) 
             className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 text-slate-500"
             onClick={onClose}
             aria-label="Close grading panel"
+            disabled={isSubmitting}
           >
             <HiOutlineXMark className="text-2xl" />
           </button>
         </div>
 
         {submission ? (
-          <form className="flex min-h-0 flex-1 flex-col" onSubmit={handleSubmit}>
+          <form className="flex min-h-0 flex-1 flex-col" onSubmit={handleSubmit(submitGrade)}>
             <div className="space-y-6 overflow-y-auto px-5 py-5">
               <section className="rounded-3xl bg-slate-50 p-4">
                 <div className="flex items-center gap-3">
@@ -115,13 +156,13 @@ function GradingDrawer({ isOpen, submission, isSubmitting, onClose, onSubmit }) 
                       max={submission.assignment.maxScore}
                       step="0.01"
                       required
-                      value={score}
-                      onChange={(event) => setScore(event.target.value)}
+                      {...register('score')}
                     />
                     <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium text-slate-400">
                       /{submission.assignment.maxScore}
                     </span>
                   </div>
+                  {errors.score ? <p className="mt-2 text-sm text-danger">{errors.score.message}</p> : null}
                 </label>
 
                 <label className="block">
@@ -129,10 +170,10 @@ function GradingDrawer({ isOpen, submission, isSubmitting, onClose, onSubmit }) 
                   <textarea
                     className="input min-h-32 resize-y"
                     rows={4}
-                    value={feedback}
-                    onChange={(event) => setFeedback(event.target.value)}
                     placeholder="Share what was strong and what should improve next."
+                    {...register('feedback')}
                   />
+                  {errors.feedback ? <p className="mt-2 text-sm text-danger">{errors.feedback.message}</p> : null}
                 </label>
               </section>
             </div>

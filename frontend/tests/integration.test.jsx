@@ -1,10 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import App from '../src/App';
-import axiosInstance from '../src/api/axios';
-import { AuthContext, AuthProvider } from '../src/context/AuthContext';
+import { AuthProvider } from '../src/context/AuthContext';
+import { AuthContext } from '../src/context/auth-context';
 
 const mockedToast = vi.hoisted(() => ({
   success: vi.fn(),

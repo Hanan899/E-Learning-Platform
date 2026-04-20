@@ -1,39 +1,71 @@
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
+import { z } from 'zod';
 import ConfirmDialog from '../ui/ConfirmDialog';
 
+const assignmentSubmissionSchema = z.object({
+  content: z.string().trim().default(''),
+  file: z.any().nullable(),
+});
+
 function SubmitAssignmentModal({ isOpen, onClose, assignment, onSubmit }) {
-  const [response, setResponse] = useState('');
-  const [file, setFile] = useState(null);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    reset,
+    control,
+    formState: { isSubmitting },
+  } = useForm({
+    resolver: zodResolver(assignmentSubmissionSchema),
+    defaultValues: {
+      content: '',
+      file: null,
+    },
+    mode: 'onChange',
+  });
 
-  const previewName = useMemo(() => file?.name || '', [file]);
+  const selectedFile = useWatch({
+    control,
+    name: 'file',
+  });
+  const previewName = selectedFile?.name || '';
 
-  const closeModal = () => {
-    setResponse('');
-    setFile(null);
+  const resetAndCloseModal = () => {
+    reset({
+      content: '',
+      file: null,
+    });
     setIsConfirmDialogOpen(false);
-    setIsSubmitting(false);
     onClose();
   };
 
-  const handlePrimarySubmit = () => {
-    setIsConfirmDialogOpen(true);
+  const closeModal = () => {
+    if (isSubmitting) {
+      return;
+    }
+
+    resetAndCloseModal();
   };
 
-  const handleConfirmedSubmit = async () => {
-    setIsSubmitting(true);
+  const handlePrimarySubmit = handleSubmit(() => {
+    setIsConfirmDialogOpen(true);
+  });
+
+  const handleConfirmedSubmit = handleSubmit(async (values) => {
     try {
       await onSubmit({
-        content: response,
-        file,
+        content: values.content.trim(),
+        file: values.file,
       });
-      closeModal();
-    } finally {
-      setIsSubmitting(false);
+      resetAndCloseModal();
+    } catch {
+      setIsConfirmDialogOpen(false);
     }
-  };
+  });
 
   return (
     <Dialog open={isOpen} onClose={closeModal} className="relative z-50">
@@ -52,8 +84,7 @@ function SubmitAssignmentModal({ isOpen, onClose, assignment, onSubmit }) {
                 id="submission-response"
                 className="input min-h-[160px] resize-none"
                 placeholder="Share your answer, reflection, or steps here..."
-                value={response}
-                onChange={(event) => setResponse(event.target.value)}
+                {...register('content')}
               />
             </div>
 
@@ -64,7 +95,12 @@ function SubmitAssignmentModal({ isOpen, onClose, assignment, onSubmit }) {
                   type="file"
                   className="hidden"
                   accept=".pdf,.jpg,.jpeg,.png,.docx"
-                  onChange={(event) => setFile(event.target.files?.[0] || null)}
+                  onChange={(event) =>
+                    setValue('file', event.target.files?.[0] || null, {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    })
+                  }
                 />
                 <p className="font-medium text-slate-700">
                   {previewName || 'Drag & drop a file or click to browse'}
@@ -74,10 +110,10 @@ function SubmitAssignmentModal({ isOpen, onClose, assignment, onSubmit }) {
             </div>
 
             <div className="flex justify-end gap-3">
-              <button type="button" className="btn-secondary" onClick={closeModal}>
+              <button type="button" className="btn-secondary" onClick={closeModal} disabled={isSubmitting}>
                 Close
               </button>
-              <button type="button" className="btn-primary" onClick={handlePrimarySubmit}>
+              <button type="button" className="btn-primary" onClick={handlePrimarySubmit} disabled={isSubmitting}>
                 Submit Assignment
               </button>
             </div>

@@ -1,10 +1,11 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import ProtectedRoute from '../src/components/common/ProtectedRoute';
-import { AuthContext, AuthProvider } from '../src/context/AuthContext';
+import { AuthProvider } from '../src/context/AuthContext';
+import { AuthContext } from '../src/context/auth-context';
 import LoginPage from '../src/pages/auth/LoginPage';
 import RegisterPage from '../src/pages/auth/RegisterPage';
 

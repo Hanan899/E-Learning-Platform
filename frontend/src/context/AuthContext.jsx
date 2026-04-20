@@ -1,5 +1,7 @@
-import { createContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import axiosInstance from '../api/axios';
+import { AuthContext } from './auth-context';
 
 const storageKeys = ['token', 'user'];
 
@@ -22,81 +24,121 @@ const clearSession = () => {
   });
 };
 
-export const AuthContext = createContext({
-  user: null,
-  token: null,
-  isAuthenticated: false,
-  isLoading: true,
-  login: async () => {},
-  register: async () => {},
-  logout: () => {},
-  hasRole: () => false,
-});
+const writeSession = ({ token, user, rememberMe }) => {
+  clearSession();
+
+  if (!token || !user) {
+    return;
+  }
+
+  const storage = rememberMe ? localStorage : sessionStorage;
+  storage.setItem('token', token);
+  storage.setItem('user', JSON.stringify(user));
+};
+
+const areUsersEqual = (firstUser, secondUser) =>
+  JSON.stringify(firstUser || null) === JSON.stringify(secondUser || null);
 
 export function AuthProvider({ children }) {
-  const initialSession = getPersistedSession();
-  const [user, setUser] = useState(initialSession.user);
-  const [token, setToken] = useState(initialSession.token);
-  const [isLoading, setIsLoading] = useState(Boolean(initialSession.token));
+  const queryClient = useQueryClient();
+  const [session, setSession] = useState(getPersistedSession);
 
   const persistSession = (nextToken, nextUser, rememberMe = true) => {
-    clearSession();
-    const storage = rememberMe ? localStorage : sessionStorage;
+    const nextSession = {
+      token: nextToken,
+      user: nextUser,
+      rememberMe,
+    };
 
-    storage.setItem('token', nextToken);
-    storage.setItem('user', JSON.stringify(nextUser));
-    setToken(nextToken);
-    setUser(nextUser);
+    writeSession(nextSession);
+    setSession(nextSession);
   };
 
   const logout = () => {
     clearSession();
-    setToken(null);
-    setUser(null);
-    setIsLoading(false);
+    setSession({
+      token: null,
+      user: null,
+      rememberMe: false,
+    });
+    queryClient.removeQueries({ queryKey: ['auth', 'me'] });
   };
 
+  const meQuery = useQuery({
+    queryKey: ['auth', 'me', session.token],
+    queryFn: async () => {
+      try {
+        const response = await axiosInstance.get('/auth/me');
+        return response.data.data.user;
+      } catch (error) {
+        clearSession();
+        setSession({
+          token: null,
+          user: null,
+          rememberMe: false,
+        });
+        queryClient.removeQueries({ queryKey: ['auth', 'me'] });
+        throw error;
+      }
+    },
+    enabled: Boolean(session.token),
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+    placeholderData: session.user ?? undefined,
+  });
+
+  const loginMutation = useMutation({
+    mutationFn: async ({ email, password }) => {
+      const response = await axiosInstance.post('/auth/login', { email, password });
+      return response.data.data;
+    },
+  });
+
+  const registerMutation = useMutation({
+    mutationFn: async (payload) => {
+      const response = await axiosInstance.post('/auth/register', payload);
+      return response.data.data;
+    },
+  });
+
+  useEffect(() => {
+    if (!session.token || !meQuery.data || areUsersEqual(session.user, meQuery.data)) {
+      return;
+    }
+
+    writeSession({
+      token: session.token,
+      user: meQuery.data,
+      rememberMe: session.rememberMe,
+    });
+  }, [meQuery.data, session.rememberMe, session.token, session.user]);
+
   const login = async (email, password, options = {}) => {
-    const response = await axiosInstance.post('/auth/login', { email, password });
-    const nextToken = response.data.data.token;
-    const nextUser = response.data.data.user;
+    const authData = await loginMutation.mutateAsync({ email, password });
+    const rememberMe = options.rememberMe ?? true;
 
-    persistSession(nextToken, nextUser, options.rememberMe ?? true);
+    persistSession(authData.token, authData.user, rememberMe);
+    queryClient.setQueryData(['auth', 'me', authData.token], authData.user);
 
-    return nextUser;
+    return authData.user;
   };
 
   const register = async (payload) => {
-    const response = await axiosInstance.post('/auth/register', payload);
-    const nextToken = response.data.data.token;
-    const nextUser = response.data.data.user;
+    const authData = await registerMutation.mutateAsync(payload);
+    const rememberMe = payload.rememberMe ?? true;
 
-    persistSession(nextToken, nextUser, payload.rememberMe ?? true);
+    persistSession(authData.token, authData.user, rememberMe);
+    queryClient.setQueryData(['auth', 'me', authData.token], authData.user);
 
-    return nextUser;
+    return authData.user;
   };
 
-  useEffect(() => {
-    const validateToken = async () => {
-      if (!token) {
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const response = await axiosInstance.get('/auth/me');
-        const nextUser = response.data.data.user;
-        const rememberMe = Boolean(localStorage.getItem('token'));
-        persistSession(token, nextUser, rememberMe);
-      } catch (_error) {
-        logout();
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    validateToken();
-  }, [token]);
+  const user = meQuery.data || session.user;
+  const token = session.token;
+  const isLoading =
+    loginMutation.isPending ||
+    registerMutation.isPending ||
+    (Boolean(token) && meQuery.isPending);
 
   const value = {
     user,

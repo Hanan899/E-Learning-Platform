@@ -3,7 +3,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { AuthContext } from '../src/context/AuthContext';
+import { AuthContext } from '../src/context/auth-context';
 import QuizPage from '../src/pages/student/QuizPage';
 import QuizBuilderPage from '../src/pages/teacher/QuizBuilderPage';
 

@@ -3,9 +3,12 @@ import { useAuth } from '../../hooks/useAuth';
 import PageLoader from '../ui/PageLoader';
 import { getDefaultRouteForRole } from '../../utils/auth';
 
+const allRoles = ['admin', 'teacher', 'student'];
+
 function ProtectedRoute({ roles, children }) {
   const { isAuthenticated, isLoading, user, hasRole } = useAuth();
   const location = useLocation();
+  const allowedRoles = roles?.length ? roles : allRoles;
 
   if (isLoading) {
     return (
@@ -21,8 +24,8 @@ function ProtectedRoute({ roles, children }) {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
-  if (roles?.length && !hasRole(roles)) {
-    return <Navigate to={getDefaultRouteForRole(user?.role)} replace />;
+  if (!hasRole(allowedRoles)) {
+    return <Navigate to={user?.role ? getDefaultRouteForRole(user.role) : '/unauthorized'} replace />;
   }
 
   return children || <Outlet />;

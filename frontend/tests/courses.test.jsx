@@ -3,7 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { AuthContext } from '../src/context/AuthContext';
+import { AuthContext } from '../src/context/auth-context';
 import CourseCatalogPage from '../src/pages/student/CourseCatalogPage';
 import CourseViewPage from '../src/pages/student/CourseViewPage';
 import CourseEditorPage from '../src/pages/teacher/CourseEditorPage';

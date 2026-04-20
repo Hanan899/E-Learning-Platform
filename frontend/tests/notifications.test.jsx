@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import NotificationBell from '../src/components/layout/NotificationBell';
-import { AuthContext } from '../src/context/AuthContext';
+import { AuthContext } from '../src/context/auth-context';
 import { useNotifications } from '../src/hooks/useNotifications';
 
 const mockedAxios = vi.hoisted(() => ({

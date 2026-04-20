@@ -1,12 +1,12 @@
 const express = require('express');
 const { param, query } = require('express-validator');
 const notificationController = require('../controllers/notificationController');
-const { authenticate } = require('../middleware/auth');
+const { authenticate, authorize, USER_ROLES } = require('../middleware/auth');
 const validateRequest = require('../middleware/validateRequest');
 
 const router = express.Router();
 
-router.use(authenticate);
+router.use(authenticate, authorize(...USER_ROLES));
 
 router.get(
   '/notifications',
