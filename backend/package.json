@@ -3,20 +3,20 @@
   "version": "1.0.0",
   "description": "Backend API for the E-Learning Platform",
   "main": "src/server.js",
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "test": "jest --forceExit --detectOpenHandles",
     "seed": "node src/utils/seeder.js",
     "db:sync": "node src/utils/syncDb.js",
-    "db:migrate:postgres-to-sqlite": "node src/utils/migratePostgresToSqlite.js"
+    "db:migrate:postgres-to-sqlite": "node src/utils/migratePostgresToSqlite.js",
+    "postinstall": "npm rebuild sqlite3 --build-from-source || true"
   },
-  "keywords": [
-    "elearning",
-    "express",
-    "sequelize",
-    "sqlite"
-  ],
+  "keywords": ["elearning", "express", "sequelize", "sqlite"],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
