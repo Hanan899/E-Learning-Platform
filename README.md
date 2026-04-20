@@ -138,6 +138,74 @@ If you ever need to import an existing PostgreSQL database into SQLite:
 - Frontend: `cd frontend && npm test`
 - Frontend production build: `cd frontend && npm run build`
 
+## Deploying on Vercel
+
+### Recommended setup
+
+Deploy the `frontend` on Vercel now.
+
+Do not deploy the current backend to production on Vercel until you replace:
+
+- SQLite runtime storage in `backend/data/elearning.sqlite`
+- Local file uploads in `backend/uploads`
+
+Why:
+
+- This project currently stores production data on the local filesystem.
+- Vercel is a serverless platform, so local runtime files are not the right durable place for your database or user uploads.
+- Vercel's Express docs also note that `express.static()` is ignored for static asset serving, which affects the current `/uploads` setup.
+
+### Frontend deployment steps
+
+1. Push this repository to GitHub.
+2. In Vercel, create a new project from the repo.
+3. Set the project's Root Directory to `frontend`.
+4. Keep the framework preset as `Vite`.
+5. Add this environment variable in Vercel:
+
+```env
+VITE_API_URL=https://your-backend-domain.example.com/api
+```
+
+6. Deploy.
+
+The frontend now includes `frontend/vercel.json` so React Router deep links work correctly on Vercel.
+
+### Backend status for Vercel
+
+The backend can only be considered Vercel-ready for production after these changes:
+
+1. Move the runtime database from SQLite to PostgreSQL.
+2. Move uploaded files from local disk to object storage such as Vercel Blob or S3-compatible storage.
+3. Set backend environment variables for production:
+
+```env
+NODE_ENV=production
+FRONTEND_ORIGIN=https://your-frontend-domain.vercel.app
+JWT_SECRET=your-long-random-secret
+JWT_EXPIRES_IN=7d
+DB_DIALECT=postgres
+DB_HOST=...
+DB_PORT=5432
+DB_NAME=...
+DB_USER=...
+DB_PASSWORD=...
+```
+
+### Best production path
+
+Use one of these:
+
+- Frontend on Vercel, backend on Railway/Render/Fly.io, database on Postgres
+- Frontend on Vercel, backend on Vercel only after migrating to Postgres + blob storage
+
+### Monorepo note
+
+If you deploy both apps from the same repository, create two separate Vercel projects:
+
+- one with Root Directory `frontend`
+- one with Root Directory `backend`
+
 ## Demo Seeded Credentials
 
 Only available if you run `npm run seed`.
