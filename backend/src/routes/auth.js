@@ -1,7 +1,7 @@
 const express = require('express');
 const { body } = require('express-validator');
 const authController = require('../controllers/authController');
-const { authenticate } = require('../middleware/auth');
+const { authenticate, authorize, USER_ROLES } = require('../middleware/auth');
 const validateRequest = require('../middleware/validateRequest');
 
 const router = express.Router();
@@ -39,12 +39,13 @@ router.post(
   authController.login
 );
 
-router.get('/me', authenticate, authController.getMe);
+router.get('/me', authenticate, authorize(...USER_ROLES), authController.getMe);
 
 router.put(
   '/profile',
   [
     authenticate,
+    authorize(...USER_ROLES),
     body('firstName').optional().trim().notEmpty().withMessage('First name cannot be empty'),
     body('lastName').optional().trim().notEmpty().withMessage('Last name cannot be empty'),
     body('avatar').optional({ nullable: true }).isString().withMessage('Avatar must be a string'),
@@ -57,6 +58,7 @@ router.put(
   '/change-password',
   [
     authenticate,
+    authorize(...USER_ROLES),
     body('currentPassword').notEmpty().withMessage('Current password is required'),
     body('newPassword')
       .matches(passwordRule)

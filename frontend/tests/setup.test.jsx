@@ -1,8 +1,10 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, test } from 'vitest';
 
 import axiosInstance from '../src/api/axios';
-import { AuthContext, AuthProvider } from '../src/context/AuthContext';
+import { AuthProvider } from '../src/context/AuthContext';
+import { AuthContext } from '../src/context/auth-context';
 
 function TestComponent() {
   return (
@@ -23,9 +25,11 @@ describe('Frontend setup', () => {
 
   test('AuthContext provides user as null initially', async () => {
     render(
-      <AuthProvider>
-        <TestComponent />
-      </AuthProvider>
+      <QueryClientProvider client={new QueryClient()}>
+        <AuthProvider>
+          <TestComponent />
+        </AuthProvider>
+      </QueryClientProvider>
     );
 
     await waitFor(() => {

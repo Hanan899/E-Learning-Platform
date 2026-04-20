@@ -3,7 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { AuthContext } from '../src/context/AuthContext';
+import { AuthContext } from '../src/context/auth-context';
 import UsersPage from '../src/pages/admin/UsersPage';
 
 const mockedAxios = vi.hoisted(() => ({

@@ -1,13 +1,13 @@
 const express = require('express');
 const { body, param } = require('express-validator');
 const contentController = require('../controllers/contentController');
-const { authenticate, authorize } = require('../middleware/auth');
+const { authenticate, authorize, USER_ROLES } = require('../middleware/auth');
 const { uploadSingle } = require('../middleware/upload');
 const validateRequest = require('../middleware/validateRequest');
 
 const router = express.Router();
 
-router.use(authenticate);
+router.use(authenticate, authorize(...USER_ROLES));
 
 router.post(
   '/courses/:courseId/sections',

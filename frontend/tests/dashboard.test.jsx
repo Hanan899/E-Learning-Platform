@@ -3,7 +3,7 @@ import { act, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import CircularProgress from '../src/components/ui/CircularProgress';
-import { AuthContext } from '../src/context/AuthContext';
+import { AuthContext } from '../src/context/auth-context';
 import StudentDashboard from '../src/pages/student/StudentDashboard';
 
 const mockedAxios = vi.hoisted(() => ({

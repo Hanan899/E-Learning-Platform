@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
+const { randomUUID } = require('crypto');
 
 const uploadDir = path.resolve(
   __dirname,
@@ -19,11 +20,24 @@ const allowedMimeTypes = new Set([
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ]);
 
+const sanitizeFilename = (originalName = 'file') => {
+  const { name, ext } = path.parse(originalName);
+  const sanitizedBaseName =
+    name
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'file';
+  const sanitizedExtension = ext.toLowerCase().replace(/[^.a-z0-9]/g, '');
+
+  return `${sanitizedBaseName}${sanitizedExtension}`;
+};
+
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, uploadDir),
   filename: (_req, file, cb) => {
-    const sanitizedName = file.originalname.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9.-]/g, '');
-    cb(null, `${Date.now()}-${sanitizedName}`);
+    const sanitizedName = sanitizeFilename(file.originalname);
+    cb(null, `${Date.now()}-${randomUUID()}-${sanitizedName}`);
   },
 });
 

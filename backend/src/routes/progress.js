@@ -1,12 +1,12 @@
 const express = require('express');
 const { param } = require('express-validator');
 const progressController = require('../controllers/progressController');
-const { authenticate, authorize } = require('../middleware/auth');
+const { authenticate, authorize, USER_ROLES } = require('../middleware/auth');
 const validateRequest = require('../middleware/validateRequest');
 
 const router = express.Router();
 
-router.use(authenticate);
+router.use(authenticate, authorize(...USER_ROLES));
 
 router.get('/student/dashboard', authorize('student'), progressController.getStudentDashboard);
 router.get('/teacher/dashboard', authorize('teacher'), progressController.getTeacherDashboard);

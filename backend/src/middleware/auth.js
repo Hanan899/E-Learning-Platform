@@ -2,6 +2,8 @@ const jwt = require('jsonwebtoken');
 const { User } = require('../models');
 const { error } = require('../utils/responseHelper');
 
+const USER_ROLES = ['admin', 'teacher', 'student'];
+
 const authenticate = async (req, res, next) => {
   try {
     const authorization = req.headers.authorization;
@@ -44,4 +46,5 @@ const authorize = (...roles) => (req, res, next) => {
 module.exports = {
   authenticate,
   authorize,
+  USER_ROLES,
 };

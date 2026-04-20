@@ -10,7 +10,7 @@ const {
 } = require('../utils/authHelpers');
 
 const findUserByEmail = (email) =>
-  User.findOne({
+  User.scope('withPassword').findOne({
     where: where(fn('LOWER', col('email')), {
       [Op.eq]: normalizeEmail(email),
     }),
@@ -160,7 +160,7 @@ const updateProfile = async (req, res, next) => {
 const changePassword = async (req, res, next) => {
   try {
     const { currentPassword, newPassword } = req.body;
-    const user = await User.findByPk(req.user.id);
+    const user = await User.scope('withPassword').findByPk(req.user.id);
 
     if (!user) {
       return error(res, 'User not found', 404);

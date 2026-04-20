@@ -1,12 +1,12 @@
 const express = require('express');
 const { body, param } = require('express-validator');
 const quizController = require('../controllers/quizController');
-const { authenticate, authorize } = require('../middleware/auth');
+const { authenticate, authorize, USER_ROLES } = require('../middleware/auth');
 const validateRequest = require('../middleware/validateRequest');
 
 const router = express.Router();
 
-router.use(authenticate);
+router.use(authenticate, authorize(...USER_ROLES));
 
 router.post(
   '/courses/:courseId/quizzes',

@@ -1,8 +1,11 @@
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { HiOutlineClipboardDocumentList } from 'react-icons/hi2';
 import { useParams } from 'react-router-dom';
+import { z } from 'zod';
 import axiosInstance from '../../api/axios';
 import AppLayout from '../../components/layout/AppLayout';
 import EmptyState from '../../components/ui/EmptyState';
@@ -19,7 +22,6 @@ function AssignmentDetailPage() {
   const { id } = useParams();
   const queryClient = useQueryClient();
   const [selectedSubmission, setSelectedSubmission] = useState(null);
-  const [gradeForm, setGradeForm] = useState({ score: '', feedback: '' });
   const { data, isLoading } = useQuery({
     queryKey: ['teacher-assignment-detail', id],
     queryFn: () => fetchAssignmentDetail(id),
@@ -28,6 +30,32 @@ function AssignmentDetailPage() {
   const assignment = data?.assignment;
   const submissions = assignment?.submissions || [];
   const stats = data?.stats || { totalSubmitted: 0, totalGraded: 0, averageScore: 0 };
+  const gradeSchema = useMemo(
+    () =>
+      z.object({
+        score: z.coerce
+          .number({
+            required_error: 'Score is required',
+            invalid_type_error: 'Score must be a number',
+          })
+          .min(0, 'Score must be zero or higher')
+          .max(Number(assignment?.maxScore || 0), `Score cannot exceed ${assignment?.maxScore || 0}`),
+        feedback: z.string().trim().optional(),
+      }),
+    [assignment?.maxScore]
+  );
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(gradeSchema),
+    defaultValues: {
+      score: '',
+      feedback: '',
+    },
+  });
 
   const gradingMutation = useMutation({
     mutationFn: async (payload) => {
@@ -41,7 +69,10 @@ function AssignmentDetailPage() {
       toast.success('Submission graded successfully');
       queryClient.invalidateQueries({ queryKey: ['teacher-assignment-detail', id] });
       setSelectedSubmission(null);
-      setGradeForm({ score: '', feedback: '' });
+      reset({
+        score: '',
+        feedback: '',
+      });
     },
     onError: (error) => {
       toast.error(error.response?.data?.message || 'Unable to grade submission');
@@ -55,6 +86,16 @@ function AssignmentDetailPage() {
 
     return `${stats.averageScore}/${assignment.maxScore}`;
   }, [assignment, stats.averageScore]);
+
+  useEffect(() => {
+    reset({
+      score:
+        selectedSubmission?.score !== null && selectedSubmission?.score !== undefined
+          ? String(selectedSubmission.score)
+          : '',
+      feedback: selectedSubmission?.feedback ?? '',
+    });
+  }, [reset, selectedSubmission]);
 
   if (isLoading) {
     return (
@@ -170,10 +211,6 @@ function AssignmentDetailPage() {
                               className="btn-secondary px-4"
                               onClick={() => {
                                 setSelectedSubmission(submission);
-                                setGradeForm({
-                                  score: submission.score ?? '',
-                                  feedback: submission.feedback ?? '',
-                                });
                               }}
                             >
                               Grade
@@ -213,10 +250,6 @@ function AssignmentDetailPage() {
                         className="btn-secondary mt-4 w-full"
                         onClick={() => {
                           setSelectedSubmission(submission);
-                          setGradeForm({
-                            score: submission.score ?? '',
-                            feedback: submission.feedback ?? '',
-                          });
                         }}
                       >
                         Grade
@@ -247,14 +280,13 @@ function AssignmentDetailPage() {
           {selectedSubmission ? (
             <form
               className="mt-6 space-y-5"
-              onSubmit={(event) => {
-                event.preventDefault();
+              onSubmit={handleSubmit((values) => {
                 gradingMutation.mutate({
                   submissionId: selectedSubmission.id,
-                  score: gradeForm.score,
-                  feedback: gradeForm.feedback,
+                  score: values.score,
+                  feedback: values.feedback || '',
                 });
-              }}
+              })}
             >
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="grade-score">
@@ -266,9 +298,9 @@ function AssignmentDetailPage() {
                   min="0"
                   max={assignment.maxScore}
                   className="input"
-                  value={gradeForm.score}
-                  onChange={(event) => setGradeForm((value) => ({ ...value, score: event.target.value }))}
+                  {...register('score')}
                 />
+                {errors.score ? <p className="mt-2 text-sm text-danger">{errors.score.message}</p> : null}
               </div>
 
               <div>
@@ -278,9 +310,9 @@ function AssignmentDetailPage() {
                 <textarea
                   id="grade-feedback"
                   className="input min-h-[180px] resize-none"
-                  value={gradeForm.feedback}
-                  onChange={(event) => setGradeForm((value) => ({ ...value, feedback: event.target.value }))}
+                  {...register('feedback')}
                 />
+                {errors.feedback ? <p className="mt-2 text-sm text-danger">{errors.feedback.message}</p> : null}
               </div>
 
               <button type="submit" className="btn-primary w-full" disabled={gradingMutation.isPending}>

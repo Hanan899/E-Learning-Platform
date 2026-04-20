@@ -1,10 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import SubmitAssignmentModal from '../src/components/assignments/SubmitAssignmentModal';
-import { AuthContext } from '../src/context/AuthContext';
+import { AuthContext } from '../src/context/auth-context';
 import StudentAssignmentsPage from '../src/pages/student/StudentAssignmentsPage';
 
 const mockedAxios = vi.hoisted(() => ({
