@@ -199,8 +199,8 @@ const getCourse = async (req, res, next) => {
           })
         : null;
 
-    if (req.user.role === 'student' && !course.isPublished && !enrollment) {
-      return error(res, 'You do not have access to this course', 403);
+    if (req.user.role === 'student' && !course.isPublished) {
+      return error(res, 'This course is currently unavailable to students', 403);
     }
 
     const sections = course.sections.map((section) => ({

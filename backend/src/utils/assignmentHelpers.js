@@ -79,6 +79,10 @@ const ensureAssignmentAccess = async (assignmentId, user) => {
   }
 
   if (user.role === 'student') {
+    if (!assignment.course.isPublished) {
+      return { error: { statusCode: 403, message: 'This course is currently unavailable to students' } };
+    }
+
     const enrollment = await Enrollment.findOne({
       where: {
         studentId: user.id,

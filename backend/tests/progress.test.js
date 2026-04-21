@@ -140,6 +140,18 @@ describe('Progress Dashboards', () => {
       expect(res.body.data.enrolledCourses[0].course.title).toBe('Science Lab');
     });
 
+    test('excludes unpublished enrolled courses from student dashboard', async () => {
+      await course.update({ isPublished: false });
+
+      const token = createToken(student);
+      const res = await request(app)
+        .get('/api/student/dashboard')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.enrolledCourses).toHaveLength(0);
+    });
+
     test('upcoming deadlines only include unsubmitted future assignments', async () => {
       const futurePending = await Assignment.create({
         title: 'Lab Report',

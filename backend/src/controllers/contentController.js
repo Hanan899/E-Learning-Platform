@@ -242,6 +242,18 @@ const markLessonComplete = async (req, res, next) => {
       return error(res, 'Lesson not found', 404);
     }
 
+    const course = await Course.findByPk(lesson.courseId, {
+      attributes: ['id', 'isPublished'],
+    });
+
+    if (!course) {
+      return error(res, 'Course not found', 404);
+    }
+
+    if (!course.isPublished) {
+      return error(res, 'This course is currently unavailable to students', 403);
+    }
+
     const enrollment = await Enrollment.findOne({
       where: { studentId: req.user.id, courseId: lesson.courseId },
     });

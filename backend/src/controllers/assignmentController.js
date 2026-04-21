@@ -109,6 +109,10 @@ const getAssignments = async (req, res, next) => {
 
     let enrollment = null;
     if (req.user.role === 'student') {
+      if (!course.isPublished) {
+        return error(res, 'This course is currently unavailable to students', 403);
+      }
+
       enrollment = await Enrollment.findOne({
         where: { studentId: req.user.id, courseId: course.id },
       });

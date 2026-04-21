@@ -28,6 +28,55 @@ E-Learning Platform/
 └── README.md
 ```
 
+## Visual Overview
+
+### Platform Flow
+
+```mermaid
+flowchart LR
+    A[Admin] --> B[Manage users and reports]
+    T[Teacher] --> C[Create course]
+    C --> D[Add sections, lessons, assignments, quizzes]
+    D --> E[Publish course]
+    E --> F[Student catalog]
+    S[Student] --> F
+    F --> G[Enroll]
+    G --> H[Learn lessons]
+    H --> I[Submit assignments and take quizzes]
+    I --> J[Progress, grades, notifications]
+    J --> K[Student dashboard]
+    D --> L[Teacher grading and analytics]
+    L --> M[Teacher dashboard]
+```
+
+### Course Lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> Draft
+    Draft --> Published: Teacher publishes
+    Published --> Draft: Teacher unpublishes
+
+    state Draft {
+      [*] --> HiddenFromStudents
+    }
+
+    state Published {
+      [*] --> VisibleToStudents
+      VisibleToStudents --> Enrollable
+      Enrollable --> AccessibleToEnrolledStudents
+    }
+```
+
+### Live System Snapshot
+
+| Signal | Meaning |
+| --- | --- |
+| `Published` | Students can discover, enroll, and open the course |
+| `Draft/Unpublished` | Students cannot see or access the course |
+| `Enrollment retained` | Enrollment record stays in the database after unpublish |
+| `Access blocked` | Student routes and dashboards stop showing the course until republished |
+
 ## Setup
 
 1. Clone the repository and move into the project:
@@ -131,6 +180,30 @@ If you ever need to import an existing PostgreSQL database into SQLite:
 1. Fill in the `SOURCE_PG_*` values in `backend/.env`.
 2. Run:
    `cd backend && npm run db:migrate:postgres-to-sqlite`
+
+## Course Visibility Rules
+
+Student-facing course access follows these rules:
+
+- `Published`: visible in the student catalog, enrollable, and accessible to enrolled students
+- `Draft/Unpublished`: hidden from students and inaccessible on student routes, even if an enrollment record already exists
+- Enrollment records are preserved when a course is unpublished; student access is blocked, not deleted
+
+Important product note:
+
+- If you want already-enrolled students to keep access while blocking new enrollments, use a separate lifecycle state such as `Archived` or `Private`
+- Do not overload `Draft/Unpublished` for that purpose; in this project it is treated as an authoring-only state
+
+### Student Access Decision
+
+```mermaid
+flowchart TD
+    A[Student opens course surface] --> B{Course published?}
+    B -- Yes --> C{Enrolled?}
+    B -- No --> D[Hide or return 403]
+    C -- Yes --> E[Allow access]
+    C -- No --> F[Show published catalog and allow enrollment]
+```
 
 ## Test Commands
 
@@ -253,9 +326,30 @@ You can use credentials such as `owner@eduflow.com` / `Admin123!` when creating 
 | Progress | `GET /api/student/dashboard`, `GET /api/teacher/dashboard`, `GET /api/courses/:id/progress` |
 | Notifications | `GET /api/notifications`, `GET /api/notifications/count`, `PUT /api/notifications/read-all` |
 
+## Visual API Flow
+
+```mermaid
+sequenceDiagram
+    participant Teacher
+    participant Backend
+    participant Student
+
+    Teacher->>Backend: Create course content
+    Teacher->>Backend: Publish course
+    Student->>Backend: View catalog
+    Backend-->>Student: Published courses only
+    Student->>Backend: Enroll in course
+    Student->>Backend: Open lessons / submit work
+    Backend-->>Student: Progress + grades + notifications
+    Teacher->>Backend: Grade submissions
+    Backend-->>Student: Dashboard updates
+```
+
 ## Notes
 
 - Runtime data is stored in `backend/data/elearning.sqlite`.
 - Uploaded files are served from `/uploads`.
 - Auth routes and API routes are rate-limited in development and production.
+- `PUT /api/courses/:id/publish` toggles the course between published and unpublished states.
+- Unpublished courses are hidden from student dashboards/catalog pages and blocked on student access routes.
 - The frontend uses polling for notifications every 30 seconds.

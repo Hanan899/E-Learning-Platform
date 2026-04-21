@@ -5,7 +5,6 @@ import {
   HiChevronDown,
   HiChevronRight,
   HiMiniPlus,
-  HiOutlineEye,
   HiOutlinePhoto,
   HiOutlineQuestionMarkCircle,
   HiOutlineSquares2X2,
@@ -43,17 +42,26 @@ function CourseEditorPage() {
     queryFn: () => fetchCourse(id),
   });
 
+  const courseSections = useMemo(
+    () =>
+      (course?.sections || []).map((section) => ({
+        ...section,
+        lessons: section.lessons || [],
+      })),
+    [course?.sections]
+  );
+
   const selectedLesson = useMemo(() => {
-    const allLessons = course?.sections.flatMap((section) => section.lessons) || [];
+    const allLessons = courseSections.flatMap((section) => section.lessons || []);
     return allLessons.find((lesson) => lesson.id === selectedLessonId) || allLessons[0] || null;
-  }, [course?.sections, selectedLessonId]);
+  }, [courseSections, selectedLessonId]);
 
   useEffect(() => {
-    if (!selectedLessonId && course?.sections?.length) {
-      const firstLesson = course.sections.flatMap((section) => section.lessons)[0];
+    if (!selectedLessonId && courseSections.length) {
+      const firstLesson = courseSections.flatMap((section) => section.lessons || [])[0];
       setSelectedLessonId(firstLesson?.id || null);
     }
-  }, [course?.sections, selectedLessonId]);
+  }, [courseSections, selectedLessonId]);
 
   useEffect(() => {
     if (!course) {
@@ -222,7 +230,7 @@ function CourseEditorPage() {
       return;
     }
 
-    const reordered = [...course.sections];
+    const reordered = [...courseSections];
     const sourceIndex = reordered.findIndex((section) => section.id === draggedSectionId);
     const targetIndex = reordered.findIndex((section) => section.id === targetSectionId);
     const [moved] = reordered.splice(sourceIndex, 1);
@@ -237,7 +245,7 @@ function CourseEditorPage() {
     setDraggedSectionId(null);
   };
 
-  const totalLessons = course?.sections?.reduce((total, section) => total + section.lessons.length, 0) || 0;
+  const totalLessons = courseSections.reduce((total, section) => total + section.lessons.length, 0);
   const hasCourseDetailChanges =
     courseDraft.title !== (course?.title || '') ||
     courseDraft.description !== (course?.description || '') ||
@@ -376,7 +384,7 @@ function CourseEditorPage() {
 
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-4">
               <div className="flex flex-wrap gap-2 text-sm text-slate-500">
-                <span>{course.sections.length} sections</span>
+                <span>{courseSections.length} sections</span>
                 <span>{totalLessons} lessons</span>
                 <span>{(course.quizzes || []).length} quizzes</span>
               </div>
@@ -393,51 +401,41 @@ function CourseEditorPage() {
         </article>
 
         <article className="card overflow-hidden p-0">
-          <div className="border-b border-slate-100 bg-gradient-to-r from-slate-950 via-slate-900 to-primary px-6 py-6 text-white">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/65">
-                  Student Preview
-                </p>
-                <h2 className="mt-2 text-2xl font-bold text-white">Course Preview</h2>
-                <p className="mt-1 text-sm text-white/70">
-                  A live snapshot of how this course is presented before students open it.
-                </p>
-              </div>
-              <button
-                type="button"
-                className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-white px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100"
-                onClick={() => window.open(`/student/courses/${id}`, '_blank')}
-              >
-                <HiOutlineEye className="mr-2 text-lg" />
-                Open full preview
-              </button>
+          <div className="border-b border-slate-100 bg-gradient-to-r from-white via-slate-50 to-primary/10 px-6 py-6">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary/80">
+                Student Preview
+              </p>
+              <h2 className="mt-2 text-2xl font-bold text-slate-950">Course Preview</h2>
+              <p className="mt-1 text-sm text-slate-600">
+                A live snapshot of how this course is presented before students open it.
+              </p>
             </div>
           </div>
 
           <div className="space-y-5 p-6">
-            <div className="overflow-hidden rounded-[2rem] bg-slate-950 text-white shadow-gentle">
+            <div className="overflow-hidden rounded-[2rem] border border-slate-100 bg-gradient-to-br from-white via-slate-50 to-primary/5 text-slate-950 shadow-gentle">
               {thumbnailPreviewUrl ? (
                 <img src={thumbnailPreviewUrl} alt="Course cover" className="h-52 w-full object-cover" />
               ) : (
-                <div className="flex h-52 items-center justify-center bg-gradient-to-br from-slate-900 via-primary/60 to-slate-950">
-                  <div className="rounded-3xl bg-white/10 p-4 text-white/90">
+                <div className="flex h-52 items-center justify-center bg-gradient-to-br from-primary/10 via-white to-accent/10">
+                  <div className="rounded-3xl bg-white p-4 text-primary shadow-sm">
                     <HiOutlinePhoto className="text-4xl" />
                   </div>
                 </div>
               )}
 
               <div className="p-6">
-                <span className="rounded-full bg-white/10 px-3 py-1 text-sm text-slate-200">
+                <span className="rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
                   {courseDraft.category || 'General'}
                 </span>
-                <h3 className="mt-4 text-3xl font-extrabold text-white">
+                <h3 className="mt-4 text-3xl font-extrabold text-slate-950">
                   {courseDraft.title || 'Untitled course'}
                 </h3>
-                <p className="mt-3 text-slate-300">
+                <p className="mt-3 text-slate-600">
                   Teacher: {course.teacher?.firstName} {course.teacher?.lastName}
                 </p>
-                <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300">
+                <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-500">
                   {courseDraft.description || 'Your course description preview will appear here once you add one.'}
                 </p>
               </div>
@@ -446,7 +444,7 @@ function CourseEditorPage() {
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="rounded-3xl bg-slate-50 p-4">
                 <p className="text-sm text-slate-500">Sections</p>
-                <p className="mt-2 text-3xl font-bold text-slate-950">{course.sections.length}</p>
+                <p className="mt-2 text-3xl font-bold text-slate-950">{courseSections.length}</p>
               </div>
               <div className="rounded-3xl bg-slate-50 p-4">
                 <p className="text-sm text-slate-500">Lessons</p>
@@ -472,12 +470,12 @@ function CourseEditorPage() {
               </div>
 
               <div className="mt-4 space-y-3">
-                {course.sections.length === 0 ? (
+                {courseSections.length === 0 ? (
                   <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-5 text-sm text-slate-500">
                     Add sections and lessons to see the course outline preview.
                   </div>
                 ) : (
-                  course.sections.slice(0, 3).map((section) => (
+                  courseSections.slice(0, 3).map((section) => (
                     <div key={section.id} className="rounded-2xl border border-slate-200 bg-white p-4">
                       <p className="font-semibold text-slate-900">{section.title}</p>
                       <p className="mt-1 text-sm text-slate-500">
@@ -510,7 +508,7 @@ function CourseEditorPage() {
           </div>
 
           <div className="mt-5 space-y-3">
-            {course.sections.map((section) => {
+            {courseSections.map((section) => {
               const isCollapsed = collapsedSections[section.id];
 
               return (
@@ -623,8 +621,8 @@ function CourseEditorPage() {
               className="btn-primary w-full"
               onClick={() =>
                 createSectionMutation.mutate({
-                  title: newSectionTitle || `Section ${course.sections.length + 1}`,
-                  order: course.sections.length + 1,
+                  title: newSectionTitle || `Section ${courseSections.length + 1}`,
+                  order: courseSections.length + 1,
                 })
               }
             >

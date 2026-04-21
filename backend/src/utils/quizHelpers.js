@@ -171,6 +171,10 @@ const ensureQuizAccess = async (quizId, user) => {
   }
 
   if (user.role === 'student') {
+    if (!quiz.course.isPublished) {
+      return { error: { statusCode: 403, message: 'This course is currently unavailable to students' } };
+    }
+
     const enrollment = await Enrollment.findOne({
       where: { studentId: user.id, courseId: quiz.courseId },
     });

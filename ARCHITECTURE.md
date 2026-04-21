@@ -18,6 +18,22 @@ At a high level:
 3. Controllers use Sequelize models and associations to read/write data.
 4. The frontend uses React Query to fetch, cache, and refresh server state.
 
+## Visual System Map
+
+```mermaid
+flowchart LR
+    UI[React frontend]
+    API[Express API]
+    DB[(SQLite via Sequelize)]
+    FS[Uploads directory]
+
+    UI -->|Axios + JWT| API
+    API -->|CRUD + auth + validation| DB
+    API -->|Multer files| FS
+    DB -->|normalized data| API
+    API -->|JSON responses| UI
+```
+
 ## Top-Level Structure
 
 ```text
@@ -123,8 +139,27 @@ Important relationships:
 - A teacher owns many courses.
 - A course has many sections, lessons, materials, assignments, quizzes, enrollments, and progress entries.
 - A student has many enrollments, submissions, quiz attempts, notifications, and lesson progress entries.
+- Enrollment records can outlive course publication state changes; student access is governed by course visibility rules, not enrollment deletion.
 - Assignments have many submissions.
 - Quizzes have many questions and attempts.
+
+### Entity Relationship Snapshot
+
+```mermaid
+erDiagram
+    USER ||--o{ COURSE : teaches
+    USER ||--o{ ENROLLMENT : joins
+    COURSE ||--o{ SECTION : contains
+    SECTION ||--o{ LESSON : contains
+    LESSON ||--o{ MATERIAL : has
+    COURSE ||--o{ ASSIGNMENT : has
+    ASSIGNMENT ||--o{ SUBMISSION : receives
+    COURSE ||--o{ QUIZ : has
+    QUIZ ||--o{ QUESTION : contains
+    QUIZ ||--o{ QUIZ_ATTEMPT : receives
+    USER ||--o{ QUIZ_ATTEMPT : completes
+    USER ||--o{ LESSON_PROGRESS : records
+```
 
 ## Frontend Architecture
 
@@ -137,6 +172,19 @@ Typical frontend flow:
 3. Axios sends requests to the backend API.
 4. Shared layout/components render lists, forms, charts, and actions.
 5. Auth context provides the current user and role-aware access behavior.
+
+### Frontend Interaction Flow
+
+```mermaid
+flowchart LR
+    A[Route] --> B[Page]
+    B --> C[React Query / local state]
+    C --> D[Axios]
+    D --> E[Backend API]
+    E --> F[Response data]
+    F --> G[Shared components]
+    G --> H[Role-aware UI]
+```
 
 ### Frontend Layers
 
@@ -201,6 +249,26 @@ Authorization model:
 3. Students enroll and consume lessons/materials.
 4. Progress is tracked through enrollments and lesson progress records.
 
+Course visibility rules:
+
+- `Published`: student-visible, enrollable, and accessible
+- `Draft/Unpublished`: hidden and inaccessible to students, even if enrollment records already exist
+- A separate state such as `Archived` or `Private` should be introduced if existing students must retain access while new enrollments are blocked
+
+### Course Content Flow
+
+```mermaid
+flowchart TD
+    A[Teacher creates draft course] --> B[Add sections and lessons]
+    B --> C[Add assignments and quizzes]
+    C --> D[Publish]
+    D --> E[Student catalog]
+    E --> F[Enrollment]
+    F --> G[Lesson consumption]
+    G --> H[Assignments and quizzes]
+    H --> I[Progress + notifications + dashboards]
+```
+
 ### Assessment Flow
 
 1. Teacher creates assignments and quizzes.
@@ -211,6 +279,24 @@ Authorization model:
    - teacher views
    - admin reports
    - notifications
+
+### Assessment Sequence
+
+```mermaid
+sequenceDiagram
+    participant Teacher
+    participant Student
+    participant API
+    participant DB
+
+    Teacher->>API: Create assignment / quiz
+    API->>DB: Save assessment
+    Student->>API: Submit work / attempt quiz
+    API->>DB: Save submission / attempt
+    Teacher->>API: Grade submission
+    API->>DB: Update score + feedback + notification
+    API-->>Student: Dashboard and notification updates
+```
 
 ### Reporting Flow
 
@@ -271,6 +357,15 @@ Current test commands:
 - Notification data is polled on the frontend.
 - SQLite is the main dev/runtime database.
 - The codebase is organized by domain and role rather than by a single monolithic module.
+
+## Operational Pulse
+
+| Layer | Live Responsibility |
+| --- | --- |
+| Frontend | role-based pages, cached queries, fast UI updates |
+| Backend | auth, validation, business rules, normalized responses |
+| Database | courses, enrollments, grades, attempts, lesson progress |
+| Uploads | course files and lesson assets served through `/uploads` |
 
 ## Suggested Future Improvements
 

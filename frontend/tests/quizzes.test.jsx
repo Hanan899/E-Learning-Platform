@@ -322,4 +322,124 @@ describe('QuizBuilderPage', () => {
     expect(within(modal).getByText('First question text')).toBeInTheDocument();
     expect(within(modal).getByText('Second question text')).toBeInTheDocument();
   });
+
+  test('can add the first question without crashing when the quiz starts empty', async () => {
+    let quizFetchCount = 0;
+
+    mockedAxios.get.mockImplementation((url) => {
+      if (url === '/quizzes/quiz-1') {
+        quizFetchCount += 1;
+
+        return Promise.resolve({
+          data: {
+            data: {
+              quiz: {
+                id: 'quiz-1',
+                title: 'Empty Quiz',
+                courseId: 'course-1',
+                course: { id: 'course-1', title: 'Science' },
+                timeLimit: 10,
+                questions:
+                  quizFetchCount === 1
+                    ? []
+                    : [
+                        {
+                          id: 'question-1',
+                          text: 'New question',
+                          options: [
+                            { id: 'a', text: 'Option A' },
+                            { id: 'b', text: 'Option B' },
+                            { id: 'c', text: 'Option C' },
+                            { id: 'd', text: 'Option D' },
+                          ],
+                          correctOption: 'a',
+                          points: 1,
+                          order: 1,
+                        },
+                      ],
+              },
+            },
+          },
+        });
+      }
+
+      if (url === '/notifications') {
+        return Promise.resolve(createNotificationResponse());
+      }
+
+      if (url === '/notifications/count') {
+        return Promise.resolve({ data: { data: { unreadCount: 0 } } });
+      }
+
+      return Promise.reject(new Error(`Unhandled GET ${url}`));
+    });
+
+    mockedAxios.post.mockImplementation((url) => {
+      if (url === '/quizzes/quiz-1/questions') {
+        return Promise.resolve({
+          data: {
+            data: {
+              question: {
+                id: 'question-1',
+                text: 'New question',
+                options: [
+                  { id: 'a', text: 'Option A' },
+                  { id: 'b', text: 'Option B' },
+                  { id: 'c', text: 'Option C' },
+                  { id: 'd', text: 'Option D' },
+                ],
+                correctOption: 'a',
+                points: 1,
+                order: 1,
+              },
+            },
+          },
+        });
+      }
+
+      return Promise.reject(new Error(`Unhandled POST ${url}`));
+    });
+
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <MemoryRouter initialEntries={['/teacher/quizzes/quiz-1/build']}>
+          <AuthContext.Provider
+            value={{
+              user: { id: 'teacher-1', firstName: 'Grace', lastName: 'Teacher', role: 'teacher' },
+              token: 'token',
+              isAuthenticated: true,
+              isLoading: false,
+              login: vi.fn(),
+              register: vi.fn(),
+              logout: vi.fn(),
+              hasRole: (roles) => (Array.isArray(roles) ? roles.includes('teacher') : roles === 'teacher'),
+            }}
+          >
+            <Routes>
+              <Route path="/teacher/quizzes/:id/build" element={<QuizBuilderPage />} />
+            </Routes>
+          </AuthContext.Provider>
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+
+    await userEvent.click(await screen.findByRole('button', { name: /add question/i }));
+
+    await waitFor(() => {
+      expect(mockedAxios.post).toHaveBeenCalledWith('/quizzes/quiz-1/questions', {
+        text: 'New question',
+        options: [
+          { id: 'a', text: 'Option A' },
+          { id: 'b', text: 'Option B' },
+          { id: 'c', text: 'Option C' },
+          { id: 'd', text: 'Option D' },
+        ],
+        correctOption: 'a',
+        points: 1,
+        order: 1,
+      });
+    });
+
+    expect(await screen.findByDisplayValue('New question')).toBeInTheDocument();
+  });
 });
