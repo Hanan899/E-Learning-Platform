@@ -85,6 +85,8 @@ function QuestionEditor({
     setDraft(question);
   }, [question]);
 
+  const activeDraft = draft || question;
+
   return (
     <div>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -113,25 +115,29 @@ function QuestionEditor({
           <textarea
             id="question-text"
             className="input min-h-[140px] resize-none text-lg"
-            value={draft.text}
-            onChange={(event) => setDraft((value) => ({ ...value, text: event.target.value }))}
+            value={activeDraft.text || ''}
+            onChange={(event) =>
+              setDraft((value) => ({ ...(value || question), text: event.target.value }))
+            }
           />
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
-          {draft.options.map((option) => (
+          {(activeDraft.options || []).map((option) => (
             <label
               key={option.id}
               className={`rounded-2xl border p-4 ${
-                draft.correctOption === option.id ? 'border-primary bg-primary/5' : 'border-slate-200 bg-slate-50'
+                activeDraft.correctOption === option.id ? 'border-primary bg-primary/5' : 'border-slate-200 bg-slate-50'
               }`}
             >
               <div className="flex items-center gap-3">
                 <input
                   type="radio"
-                  name={`correct-option-${draft.id}`}
-                  checked={draft.correctOption === option.id}
-                  onChange={() => setDraft((value) => ({ ...value, correctOption: option.id }))}
+                  name={`correct-option-${activeDraft.id}`}
+                  checked={activeDraft.correctOption === option.id}
+                  onChange={() =>
+                    setDraft((value) => ({ ...(value || question), correctOption: option.id }))
+                  }
                 />
                 <span className="text-sm font-bold uppercase text-slate-500">{option.id}</span>
               </div>
@@ -141,8 +147,8 @@ function QuestionEditor({
                 value={option.text}
                 onChange={(event) =>
                   setDraft((value) => ({
-                    ...value,
-                    options: value.options.map((entry) =>
+                    ...(value || question),
+                    options: (value?.options || question.options || []).map((entry) =>
                       entry.id === option.id ? { ...entry, text: event.target.value } : entry
                     ),
                   }))
@@ -162,8 +168,10 @@ function QuestionEditor({
             min="1"
             max="10"
             className="input"
-            value={draft.points}
-            onChange={(event) => setDraft((value) => ({ ...value, points: Number(event.target.value) }))}
+            value={activeDraft.points}
+            onChange={(event) =>
+              setDraft((value) => ({ ...(value || question), points: Number(event.target.value) }))
+            }
           />
         </div>
 
@@ -178,11 +186,11 @@ function QuestionEditor({
               className="btn-secondary"
               onClick={() =>
                 onSave({
-                  text: draft.text,
-                  options: draft.options,
-                  correctOption: draft.correctOption,
-                  points: draft.points,
-                  order: draft.order,
+                  text: activeDraft.text,
+                  options: activeDraft.options,
+                  correctOption: activeDraft.correctOption,
+                  points: activeDraft.points,
+                  order: activeDraft.order,
                 })
               }
             >
@@ -193,11 +201,11 @@ function QuestionEditor({
               className="btn-primary"
               onClick={() =>
                 onSaveNext({
-                  text: draft.text,
-                  options: draft.options,
-                  correctOption: draft.correctOption,
-                  points: draft.points,
-                  order: draft.order,
+                  text: activeDraft.text,
+                  options: activeDraft.options,
+                  correctOption: activeDraft.correctOption,
+                  points: activeDraft.points,
+                  order: activeDraft.order,
                 })
               }
             >

@@ -249,17 +249,30 @@ function CourseViewPage() {
     queryFn: () => fetchCourse(id),
   });
 
-  const lessons = useMemo(
-    () => course?.sections.flatMap((section) => section.lessons) || [],
+  const courseSections = useMemo(
+    () =>
+      (course?.sections || []).map((section) => ({
+        ...section,
+        lessons: section.lessons || [],
+      })),
     [course?.sections]
+  );
+  const normalizedCourse = useMemo(
+    () => (course ? { ...course, sections: courseSections } : null),
+    [course, courseSections]
+  );
+
+  const lessons = useMemo(
+    () => courseSections.flatMap((section) => section.lessons),
+    [courseSections]
   );
   const selectedLesson = useMemo(
     () => lessons.find((lesson) => lesson.id === selectedLessonId) || lessons[0] || null,
     [lessons, selectedLessonId]
   );
   const selectedSectionTitle = useMemo(
-    () => course?.sections.find((section) => section.lessons.some((lesson) => lesson.id === selectedLesson?.id))?.title || '',
-    [course?.sections, selectedLesson?.id]
+    () => courseSections.find((section) => section.lessons.some((lesson) => lesson.id === selectedLesson?.id))?.title || '',
+    [courseSections, selectedLesson?.id]
   );
   const currentView = searchParams.get('view') === 'lesson' ? 'lesson' : 'outline';
 
@@ -318,7 +331,7 @@ function CourseViewPage() {
 
   const completedLessonIds = course?.studentProgress?.completedLessonIds || [];
 
-  if (isLoading || !course) {
+  if (isLoading || !normalizedCourse) {
     return (
       <AppLayout title="Course View">
         <div className="card p-10 text-center text-slate-500">Loading course content...</div>
@@ -332,21 +345,21 @@ function CourseViewPage() {
         <div className="grid gap-6 lg:grid-cols-[1fr_260px]">
           <div>
             <span className="rounded-full bg-white/10 px-3 py-1 text-sm text-slate-200">
-              {course.category || 'General'}
+              {normalizedCourse.category || 'General'}
             </span>
-            <h2 className="mt-4 text-3xl font-extrabold text-white sm:text-4xl">{course.title}</h2>
-            <p className="mt-3 text-slate-300">Teacher: {course.teacher?.firstName} {course.teacher?.lastName}</p>
-            <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-300 sm:text-base">{course.description}</p>
+            <h2 className="mt-4 text-3xl font-extrabold text-white sm:text-4xl">{normalizedCourse.title}</h2>
+            <p className="mt-3 text-slate-300">Teacher: {normalizedCourse.teacher?.firstName} {normalizedCourse.teacher?.lastName}</p>
+            <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-300 sm:text-base">{normalizedCourse.description}</p>
           </div>
           <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
             <p className="text-sm text-slate-300">Course progress</p>
             <p className="mt-2 text-3xl font-bold text-white" data-testid="progress-percentage">
-              {course.studentProgress?.completionPercentage ?? 0}%
+              {normalizedCourse.studentProgress?.completionPercentage ?? 0}%
             </p>
             <div className="mt-4 h-3 rounded-full bg-white/10">
               <div
                 className="h-3 rounded-full bg-accent"
-                style={{ width: `${course.studentProgress?.completionPercentage ?? 0}%` }}
+                style={{ width: `${normalizedCourse.studentProgress?.completionPercentage ?? 0}%` }}
               />
             </div>
           </div>
@@ -356,14 +369,14 @@ function CourseViewPage() {
       <div className="mt-6">
         {currentView === 'outline' ? (
           <CourseOutline
-            course={course}
+            course={normalizedCourse}
             selectedLessonId={selectedLesson?.id}
             completedLessonIds={completedLessonIds}
             onSelectLesson={handleSelectLesson}
           />
         ) : (
           <LessonDetails
-            course={course}
+            course={normalizedCourse}
             selectedLesson={selectedLesson}
             selectedSectionTitle={selectedSectionTitle}
             completedLessonIds={completedLessonIds}

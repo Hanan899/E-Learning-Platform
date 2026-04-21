@@ -295,6 +295,84 @@ describe('Course pages', () => {
     });
   });
 
+  test('CourseEditorPage can add a lesson when a new section has no lessons array yet', async () => {
+    mockedAxios.get.mockImplementation((url) => {
+      if (url === '/courses/course-1') {
+        return Promise.resolve({
+          data: {
+            data: {
+              course: {
+                id: 'course-1',
+                title: 'History',
+                description: 'Original description',
+                category: 'History',
+                isPublished: false,
+                sections: [
+                  {
+                    id: 'section-1',
+                    title: 'Origins',
+                  },
+                ],
+                quizzes: [],
+              },
+            },
+          },
+        });
+      }
+
+      if (url === '/notifications') {
+        return Promise.resolve(createNotificationResponse());
+      }
+
+      if (url === '/notifications/count') {
+        return Promise.resolve({ data: { data: { unreadCount: 0 } } });
+      }
+
+      return Promise.reject(new Error(`Unhandled GET ${url}`));
+    });
+
+    mockedAxios.post.mockImplementation((url) => {
+      if (url === '/sections/section-1/lessons') {
+        return Promise.resolve({
+          data: {
+            data: {
+              lesson: {
+                id: 'lesson-1',
+                title: 'New Lesson 1',
+                content: '',
+                order: 1,
+                sectionId: 'section-1',
+                materials: [],
+              },
+            },
+          },
+        });
+      }
+
+      return Promise.reject(new Error(`Unhandled POST ${url}`));
+    });
+
+    renderWithProviders(
+      <Routes>
+        <Route path="/teacher/courses/:id/edit" element={<CourseEditorPage />} />
+      </Routes>,
+      { role: 'teacher', route: '/teacher/courses/course-1/edit' }
+    );
+
+    await screen.findByTestId('course-editor-sidebar');
+    await userEvent.click(screen.getByRole('button', { name: /add lesson/i }));
+
+    await waitFor(() => {
+      expect(mockedAxios.post).toHaveBeenCalledWith('/sections/section-1/lessons', {
+        title: 'New Lesson 1',
+        content: '',
+        order: 1,
+      });
+    });
+
+    expect(screen.getByText(/select a lesson from the course outline/i)).toBeInTheDocument();
+  });
+
   test('progress bar shows correct percentage', async () => {
     mockedAxios.get.mockImplementation((url) => {
       if (url === '/courses/course-1') {
@@ -472,5 +550,57 @@ describe('Course pages', () => {
 
     expect(await screen.findByRole('button', { name: /back to outline/i })).toBeInTheDocument();
     expect(screen.getByText('Cell lesson content')).toBeInTheDocument();
+  });
+
+  test('CourseViewPage handles sections without lessons arrays safely', async () => {
+    mockedAxios.get.mockImplementation((url) => {
+      if (url === '/courses/course-1') {
+        return Promise.resolve({
+          data: {
+            data: {
+              course: {
+                id: 'course-1',
+                title: 'Biology',
+                category: 'Science',
+                teacher: { firstName: 'Grace', lastName: 'Teacher' },
+                description: 'Course description',
+                sections: [
+                  {
+                    id: 'section-1',
+                    title: 'Cells',
+                  },
+                ],
+                quizzes: [],
+                studentProgress: {
+                  completionPercentage: 0,
+                  completedLessonIds: [],
+                },
+              },
+            },
+          },
+        });
+      }
+
+      if (url === '/notifications') {
+        return Promise.resolve(createNotificationResponse());
+      }
+
+      if (url === '/notifications/count') {
+        return Promise.resolve({ data: { data: { unreadCount: 0 } } });
+      }
+
+      return Promise.reject(new Error(`Unhandled GET ${url}`));
+    });
+
+    renderWithProviders(
+      <Routes>
+        <Route path="/student/courses/:id" element={<CourseViewPage />} />
+      </Routes>,
+      { role: 'student', route: '/student/courses/course-1' }
+    );
+
+    expect(await screen.findByText(/click a lesson to open its content/i)).toBeInTheDocument();
+    expect(screen.getByText('0 lessons')).toBeInTheDocument();
+    expect(screen.queryByText('Cell lesson content')).not.toBeInTheDocument();
   });
 });

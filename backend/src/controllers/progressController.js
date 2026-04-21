@@ -36,6 +36,8 @@ const getStudentDashboard = async (req, res, next) => {
           model: Course,
           as: 'course',
           attributes: ['id', 'title', 'description', 'thumbnail', 'category', 'isPublished'],
+          where: { isPublished: true },
+          required: true,
           include: [
             {
               model: User,
@@ -735,7 +737,7 @@ const getCourseProgress = async (req, res, next) => {
 const getStudentCourseProgress = async (req, res, next) => {
   try {
     const course = await Course.findByPk(req.params.id, {
-      attributes: ['id', 'title', 'description', 'category', 'thumbnail'],
+      attributes: ['id', 'title', 'description', 'category', 'thumbnail', 'isPublished'],
       include: [
         {
           model: Section,
@@ -757,6 +759,10 @@ const getStudentCourseProgress = async (req, res, next) => {
 
     if (!course) {
       return error(res, 'Course not found', 404);
+    }
+
+    if (!course.isPublished) {
+      return error(res, 'This course is currently unavailable to students', 403);
     }
 
     const enrollment = await Enrollment.findOne({

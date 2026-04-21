@@ -40,6 +40,8 @@ function LessonEditor({
     );
   }
 
+  const activeDraft = draft || lesson;
+
   const handleMaterialUpload = async (file) => {
     setUploadProgress(5);
     await onUploadMaterial(lesson.id, { file }, (progressEvent) => {
@@ -72,8 +74,10 @@ function LessonEditor({
             <label className="mb-2 block text-sm font-medium text-slate-700">Lesson Title</label>
             <input
               className="input"
-              value={draft.title}
-              onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))}
+              value={activeDraft.title || ''}
+              onChange={(event) =>
+                setDraft((current) => ({ ...(current || lesson), title: event.target.value }))
+              }
             />
           </div>
           <button type="button" className="btn-secondary mt-7 text-danger" onClick={() => onDelete(lesson.id)}>
@@ -85,8 +89,10 @@ function LessonEditor({
           <label className="mb-2 block text-sm font-medium text-slate-700">Content</label>
           <textarea
             className="input min-h-[220px] resize-none"
-            value={draft.content || ''}
-            onChange={(event) => setDraft((current) => ({ ...current, content: event.target.value }))}
+            value={activeDraft.content || ''}
+            onChange={(event) =>
+              setDraft((current) => ({ ...(current || lesson), content: event.target.value }))
+            }
           />
         </div>
 
@@ -100,13 +106,13 @@ function LessonEditor({
           <div>
             <p className="text-sm font-medium text-slate-700">Preview</p>
             <div className="mt-2 min-h-[120px] rounded-2xl border border-slate-100 bg-white p-4 text-sm leading-7 text-slate-700">
-              {draft.content || 'Lesson preview will appear here as you type.'}
+              {activeDraft.content || 'Lesson preview will appear here as you type.'}
             </div>
           </div>
         </div>
 
         <div className="mt-6 flex justify-end">
-          <button type="button" className="btn-primary" onClick={() => onSave(lesson.id, draft)}>
+          <button type="button" className="btn-primary" onClick={() => onSave(lesson.id, activeDraft)}>
             Save Lesson
           </button>
         </div>

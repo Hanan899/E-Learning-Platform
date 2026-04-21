@@ -184,6 +184,23 @@ describe('Course and Content Management', () => {
       expect(res.body.message).toContain('Already enrolled');
     });
 
+    test('enrolled student cannot access a course after it is unpublished', async () => {
+      await Enrollment.create({
+        studentId: student.id,
+        courseId: course.id,
+        enrolledAt: new Date(),
+      });
+      await course.update({ isPublished: false });
+
+      const token = createToken(student);
+      const res = await request(app)
+        .get(`/api/courses/${course.id}`)
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(403);
+      expect(res.body.message).toContain('currently unavailable');
+    });
+
     test('marking lesson complete updates progress percentage', async () => {
       const section = await Section.create({
         title: 'Intro',

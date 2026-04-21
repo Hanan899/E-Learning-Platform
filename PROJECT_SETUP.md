@@ -28,6 +28,21 @@ E-Learning Platform/
 └── PROJECT_SETUP.md
 ```
 
+## Setup Flow Map
+
+```mermaid
+flowchart LR
+    A[Clone repo] --> B[Backend npm install]
+    B --> C[Create backend env]
+    C --> D[db:sync]
+    D --> E[Start backend]
+    E --> F[Frontend npm install]
+    F --> G[Create frontend env]
+    G --> H[Start frontend]
+    H --> I[Register users]
+    I --> J[Create courses and publish]
+```
+
 ## 1. Clone the Project
 
 ```bash
@@ -180,6 +195,26 @@ Default SQLite database path:
 
 - `backend/data/elearning.sqlite`
 
+### First-Run Journey
+
+```mermaid
+sequenceDiagram
+    participant You
+    participant Backend
+    participant Frontend
+    participant SQLite
+
+    You->>Backend: npm install
+    You->>Backend: configure .env
+    You->>Backend: npm run db:sync
+    Backend->>SQLite: create tables
+    You->>Backend: npm run dev
+    You->>Frontend: npm install && npm run dev
+    You->>Frontend: register admin/teacher/student accounts
+    Frontend->>Backend: API requests
+    Backend->>SQLite: persist live data
+```
+
 ## 6. Demo Data Setup
 
 Use this for development, demos, or testing with ready-made records.
@@ -252,7 +287,34 @@ cd frontend
 npm run build
 ```
 
-## 10. Common Troubleshooting
+## 10. Course Visibility Lifecycle
+
+The project currently uses a two-state student visibility model:
+
+- `Published`: students can discover, enroll in, and access the course
+- `Draft/Unpublished`: students cannot see or access the course, even if an enrollment record already exists
+
+Important:
+
+- Unpublishing a course does not delete enrollments
+- It only removes student-facing visibility and blocks student access until the course is published again
+
+If your product needs a softer state where existing students keep access but new students cannot join, add a separate lifecycle state such as `Archived` or `Private` instead of reusing `Draft/Unpublished`.
+
+### Visibility Flowchart
+
+```mermaid
+flowchart TD
+    A[Teacher changes course status] --> B{Published?}
+    B -- Yes --> C[Show in student catalog]
+    C --> D[Allow enrollment]
+    D --> E[Allow student access]
+    B -- No --> F[Hide from student catalog]
+    F --> G[Keep enrollment records]
+    G --> H[Block student access]
+```
+
+## 11. Common Troubleshooting
 
 ### Port Already In Use
 
@@ -292,7 +354,7 @@ Check:
 - backend server is running
 - files exist in the upload directory
 
-## 11. Recommended First Run
+## 12. Recommended First Run
 
 If you want the fastest successful first run:
 
@@ -303,7 +365,7 @@ If you want the fastest successful first run:
 5. Open the frontend and register a user
 6. Promote one account to `admin` directly in SQLite if needed
 
-## 12. Related Docs
+## 13. Related Docs
 
 - [README.md](/Users/hanan/Documents/E-Learning Platform/README.md)
 - [ARCHITECTURE.md](/Users/hanan/Documents/E-Learning Platform/ARCHITECTURE.md)
